@@ -7,7 +7,7 @@ from game import Game
 
 class App:
     def __init__(self):
-        px.init(128, 128, 'Xonix')
+        px.init(80, 80, 'Xonix')
 
         self._scenes = deque()
         self._scenes.append(Game(self._scenes))

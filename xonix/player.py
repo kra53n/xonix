@@ -1,28 +1,44 @@
+import enum
+
 import pyxel as px
+
+
+class PlayerMoveStatus(enum.Enum):
+    Stop = enum.auto()
+    Up = enum.auto()
+    Down = enum.auto()
+    Left = enum.auto()
+    Right = enum.auto()
 
 
 class Player:
     def __init__(self, x: int, y: int, offset: int, size: int, col: int):
         assert offset % 2 == 0
-        self._x = x
-        self._y = y
+        self.x = x
+        self.y = y
         self._mx = 0
         self._my = 0
         self._offset = offset
-        self._size = size
+        self.size = size
         self._col = col
 
+        self.move_status = PlayerMoveStatus.Stop
+
     def up(self):
-        self._my -= self._offset
+        #self._my -= self._offset
+        self.y -= self._offset
 
     def down(self):
-        self._my += self._offset
+        #self._my += self._offset
+        self.y += self._offset
 
     def left(self):
-        self._mx -= self._offset
+        #self._mx -= self._offset
+        self.x -= self._offset
 
     def right(self):
-        self._mx += self._offset
+        #self._mx += self._offset
+        self.x += self._offset
 
     def _smooth_x_movement(self):
         vx = self._mx / 2
@@ -30,7 +46,7 @@ class Player:
         if vx == 0.5:
             self._mx = 0
             vx = 1
-        self._x += vx
+        self.x += vx
 
     def _smooth_y_movement(self):
         vy = self._my / 2
@@ -38,11 +54,12 @@ class Player:
         if vy == 0.5:
             self._my = 0
             vy = 1
-        self._y += vy
+        self.y += vy
 
     def update(self):
-        self._smooth_x_movement()
-        self._smooth_y_movement()
+        # self._smooth_x_movement()
+        # self._smooth_y_movement()
+        pass
 
     def draw(self):
-        px.rect(self._x, self._y, self._size, self._size, self._col)
+        px.rect(self.x, self.y, self.size, self.size, self._col)
