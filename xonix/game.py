@@ -22,14 +22,18 @@ class Game:
         self._field.update()
         self._player.update()
 
-        if action.move_player_up():
+        if (action.move_player_up() and
+            self._player.move_status != PlayerMoveStatus.Down):
             self._player.move_status = PlayerMoveStatus.Up
 
-        if action.move_player_down():
+        if (action.move_player_down() and
+            self._player.move_status != PlayerMoveStatus.Up):
             self._player.move_status = PlayerMoveStatus.Down
 
-        if action.move_player_left():
+        if (action.move_player_left() and
+            self._player.move_status != PlayerMoveStatus.Right):
             self._player.move_status = PlayerMoveStatus.Left
 
-        if action.move_player_right():
+        if (action.move_player_right() and
+            self._player.move_status != PlayerMoveStatus.Left):
             self._player.move_status = PlayerMoveStatus.Right
