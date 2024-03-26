@@ -10,7 +10,7 @@ class Field:
         self._w = 20
         self._h = 20
         self._block_size = 2
-        self._thickness = 1
+        self._thickness = 3
         self._col = 3
 
         self._field = []
@@ -58,13 +58,25 @@ class Field:
             case PlayerMoveStatus.Stop:
                 pass
             case PlayerMoveStatus.Up:
-                self._player.up()
+                if self._player_pos[1] == self._y:
+                    self._player.move_status = PlayerMoveStatus.Stop
+                else:
+                    self._player.up()
             case PlayerMoveStatus.Down:
-                self._player.down()
+                if self._player_pos[1] == self._h-1:
+                    self._player.move_status = PlayerMoveStatus.Stop
+                else:
+                    self._player.down()
             case PlayerMoveStatus.Left:
-                self._player.left()
+                if self._player_pos[0] == self._x:
+                    self._player.move_status = PlayerMoveStatus.Stop
+                else:
+                    self._player.left()
             case PlayerMoveStatus.Right:
-                self._player.right()
+                if self._player_pos[0] == self._w-1:
+                    self._player.move_status = PlayerMoveStatus.Stop
+                else:
+                    self._player.right()
 
         if self._prev_player_on_field == 0 and self._player_on_field == 1:
             self._player.move_status = PlayerMoveStatus.Stop
