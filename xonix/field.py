@@ -79,32 +79,67 @@ class Field:
         return cells
 
     def _replace_field_vals(self, src: int, dst: int):
-        for i, y in enumerate(self._field):
-            for j, v in enumerate(y):
+        for y in range(self._h):
+            for x in range(self._w):
+                v = self._field[y][x]
                 if v == src:
-                    self._field[i][j] = dst
+                    self._field[y][x] = dst
 
-    #def _count_inner_cells(self, x: int, y: int, cell:
+    def _count_cells(self, val: int) -> int:
+        num = 0
+        for y in range(self._h):
+            for x in range(self._w):
+                v = self._field[y][x]
+                if v == val:
+                    num += 1
+        return num
+        
+    def _flood_fill(self, x: int, y: int, val: int):
+        self._field[y][x] = val
+        cells = self._get_cells_around_cell(x, y)
+        for cell in cells:
+            if cell[-1] in (1, val):
+                continue
+            self._flood_fill(cell[0], cell[1], val)
 
-    def _process_tail_filling(self):
-        zero_cells = []
+    def _fill_tail(self):
         for coord in self._tail:
             x, y = coord
             x = (x - self._x) // self._tail.size
             y = (y - self._y) // self._tail.size
             self._field[y][x] = 1
 
-            if zero_cells == []:
-                near_cells = self._get_cells_around_cell(x, y)
-                zeros = sum([1 for cell in near_cells if cell[-1] == 0])
-                if zeros >= 2:
-                    zero_cells = [cell for cell in near_cells if cell[-1] == 0]
-        #self._replace_field_vals(2, 1)
-        if len(zero_cells) == 3:
-            pass
-        pprint(self._field)
-        print(zero_cells)
-        self._get_cells_around_cell(0, 0)
+    def _fill_left_top_part(self):
+        for y in range(self._h):
+            for x in range(self._w):
+                v = self._field[y][x]
+                if v == 0:
+                    self._flood_fill(x, y, 2)
+                    return
+
+    def _fill_right_bottom_part(self):
+        for y in range(self._h):
+            for x in range(self._w):
+                x, y = self._w-x-1, self._h-y-1
+                v = self._field[y][x]
+                if v == 0:
+                    self._flood_fill(x, y, 3)
+                    return
+
+    def _process_tail_filling(self):
+        self._fill_tail()
+        self._fill_left_top_part()
+        self._fill_right_bottom_part()
+        left_top = self._count_cells(2)
+        right_bottom = self._count_cells(3)
+        if right_bottom == 0:
+            self._replace_field_vals(2, 0)
+        elif left_top < right_bottom:
+            self._replace_field_vals(2, 1)
+            self._replace_field_vals(3, 0)
+        else:
+            self._replace_field_vals(3, 1)
+            self._replace_field_vals(2, 0)
 
     def _move_player(self):
         match self._player.move_status:
