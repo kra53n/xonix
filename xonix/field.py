@@ -165,10 +165,12 @@ class Field:
                 else:
                     self._player.right()
 
-        if self._prev_player_on_field == 0 and self._player_on_field == 1:
+        if self._prev_player_on_field == 1:
+            self._tail.clear()
+        elif self._prev_player_on_field == 0 and self._player_on_field == 1:
             self._player.move_status = PlayerMoveStatus.Stop
             self._process_tail_filling()
-            self._player._tail.clear()
+            self._tail.clear()
         self._prev_player_on_field = self._player_on_field
 
     def draw(self):

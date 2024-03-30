@@ -19,8 +19,6 @@ class Player:
         assert offset % 2 == 0
         self.x = x
         self.y = y
-        self._mx = 0
-        self._my = 0
         self._offset = offset
         self.size = size
         self._col = col
