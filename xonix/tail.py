@@ -1,10 +1,12 @@
 import pyxel as px
 
+import config
+
 
 class Tail(list):
-    def __init__(self, size: int, col: int):
-        self.size = size
-        self._col = col
+    def __init__(self):
+        self.size = config.BLOCK_SIZE
+        self._col = config.TAIL_COL
 
     def append(self, coord: tuple[int, int]):
         super().append(coord)

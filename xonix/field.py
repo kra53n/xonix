@@ -1,5 +1,6 @@
 import pyxel as px
 
+import config
 from player import Player, PlayerMoveStatus
 from tail import Tail
 
@@ -8,11 +9,11 @@ class Field:
     def __init__(self):
         self._x = 0
         self._y = 0
-        self._w = 20
-        self._h = 20
-        self._block_size = 2
-        self._thickness = 3
-        self._col = 3
+        self._w = config.FIELD_WDT
+        self._h = config.FIELD_HGT
+        self._block_size = config.BLOCK_SIZE
+        self._thickness = config.FIELD_THICKNESS
+        self._col = config.FIELD_COL
 
         self._field = []
         self._init_field()

@@ -3,6 +3,7 @@ import enum
 import pyxel as px
 
 import action
+import config
 from tail import Tail
 
 
@@ -15,13 +16,12 @@ class PlayerMoveStatus(enum.Enum):
 
 
 class Player:
-    def __init__(self, x: int, y: int, offset: int, size: int, col: int):
-        assert offset % 2 == 0
+    def __init__(self, x: int, y: int):
         self.x = x
         self.y = y
-        self._offset = offset
-        self.size = size
-        self._col = col
+        self._offset = config.BLOCK_SIZE
+        self.size = config.BLOCK_SIZE
+        self._col = config.PLAYER_COL
 
         self.move_status = PlayerMoveStatus.Stop
 

@@ -11,8 +11,8 @@ from tail import Tail
 class Game:
     def __init__(self, scenes: deque):
         self._scenes = scenes
-        self._player = Player(2, 2, 2, 2, 1)
-        self._tail = Tail(2, 8)
+        self._player = Player(2, 2)
+        self._tail = Tail()
         self._field = Field()
 
         self._player.set_tail(self._tail)

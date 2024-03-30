@@ -2,12 +2,13 @@ from collections import deque
 
 import pyxel as px
 
+import config
 from game import Game
 
 
 class App:
     def __init__(self):
-        px.init(80, 80, 'Xonix')
+        px.init(config.WINDOW_WDT, config.WINDOW_HGT, config.WINDOW_TITLE)
 
         self._scenes = deque()
         self._scenes.append(Game(self._scenes))
