@@ -2,8 +2,8 @@ from collections import deque
 
 import pyxel as px
 
-import action
 from field import Field
+from popup_messages import GameOverMessage
 from player import Player, PlayerMoveStatus
 from tail import Tail
 
@@ -30,18 +30,6 @@ class Game:
         self._player.update()
         self._tail.update()
 
-        if (action.move_player_up() and
-            self._player.move_status != PlayerMoveStatus.Down):
-            self._player.move_status = PlayerMoveStatus.Up
+        if self._player.is_stepped_on_tail:
+            self._scenes.append(GameOverMessage(self._scenes))
 
-        if (action.move_player_down() and
-            self._player.move_status != PlayerMoveStatus.Up):
-            self._player.move_status = PlayerMoveStatus.Down
-
-        if (action.move_player_left() and
-            self._player.move_status != PlayerMoveStatus.Right):
-            self._player.move_status = PlayerMoveStatus.Left
-
-        if (action.move_player_right() and
-            self._player.move_status != PlayerMoveStatus.Left):
-            self._player.move_status = PlayerMoveStatus.Right

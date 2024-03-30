@@ -1,5 +1,3 @@
-from pprint import pprint
-
 import pyxel as px
 
 from player import Player, PlayerMoveStatus
@@ -140,6 +138,7 @@ class Field:
         else:
             self._replace_field_vals(3, 1)
             self._replace_field_vals(2, 0)
+        
 
     def _move_player(self):
         match self._player.move_status:
