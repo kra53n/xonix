@@ -12,7 +12,7 @@ class Field:
         self._w = config.FIELD_WDT
         self._h = config.FIELD_HGT
         self._block_size = config.BLOCK_SIZE
-        self._thickness = config.FIELD_THICKNESS
+        self._thickness = config.BORDER_THICKNESS
         self._col = config.FIELD_COL
 
         self._field = []
@@ -142,6 +142,7 @@ class Field:
         
 
     def _move_player(self):
+        # TODO: move to Player class
         match self._player.move_status:
             case PlayerMoveStatus.Stop:
                 pass
@@ -173,6 +174,13 @@ class Field:
             self._process_tail_filling()
             self._tail.clear()
         self._prev_player_on_field = self._player_on_field
+
+    def intersect(self, x: int, y: int) -> bool:
+        _x = x // config.BLOCK_SIZE
+        _y = y // config.BLOCK_SIZE
+        return (0 < x < self._w * self._block_size and
+                0 < y < self._h * self._block_size and
+                self._field[_y][_x] == 1)
 
     def draw(self):
         self._draw_field()
