@@ -147,7 +147,6 @@ class Field:
         
 
     def _move_player(self):
-        # TODO: move to Player class
         match self._player.move_status:
             case PlayerMoveStatus.Stop:
                 pass
@@ -172,14 +171,6 @@ class Field:
                 else:
                     self._player.right()
 
-        if self._prev_player_on_field == 1:
-            self._tail.clear()
-        elif self._prev_player_on_field == 0 and self._player_on_field == 1:
-            self._player.move_status = PlayerMoveStatus.Stop
-            self._process_tail_filling()
-            self._tail.clear()
-        self._prev_player_on_field = self._player_on_field
-
     def intersect(self, x: int, y: int) -> bool:
         _x = x // config.BLOCK_SIZE
         _y = y // config.BLOCK_SIZE
@@ -193,8 +184,20 @@ class Field:
                      for y in range(self.h)
                      if self._field[y][x] == 0)
 
+    @property
+    def fullness(self) -> float:
+        return sum(1 for x in range(self.w) for y in range(self.h) if self._field[y][x]) / self.w / self.h
+
     def draw(self):
         self._draw_field()
 
     def update(self):
         self._move_player()
+
+        if self._prev_player_on_field == 1:
+            self._tail.clear()
+        elif self._prev_player_on_field == 0 and self._player_on_field == 1:
+            self._player.move_status = PlayerMoveStatus.Stop
+            self._process_tail_filling()
+            self._tail.clear()
+        self._prev_player_on_field = self._player_on_field

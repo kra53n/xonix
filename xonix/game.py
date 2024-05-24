@@ -4,7 +4,7 @@ import pyxel as px
 
 from enemy import Enemy
 from field import Field
-from popup_messages import GameOverMessage
+from popup_messages import GameOverMessage, WinMessage
 from player import Player, PlayerMoveStatus
 from tail import Tail
 
@@ -42,4 +42,6 @@ class Game:
         if (self._player.is_stepped_on_tail or
             self._tail.have_come):
             self._scenes.append(GameOverMessage(self._scenes))
+        elif self._field.fullness >= 0.75:
+            self._scenes.append(WinMessage(self._scenes))
 

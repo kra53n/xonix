@@ -26,3 +26,15 @@ class GameOverMessage(PopupMessage):
         if px.btnp(px.KEY_R):
             self._scenes.pop()
             self._scenes.pop()
+
+class WinMessage(PopupMessage):
+    def __init__(self, scenes: deque):
+        super().__init__(scenes, 'Win')
+
+    def update(self):
+        super().update()
+        if px.btnp(px.KEY_ESCAPE):
+            self._scenes.clear()
+        if px.btnp(px.KEY_R):
+            self._scenes.pop()
+            self._scenes.pop()
