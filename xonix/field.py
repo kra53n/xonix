@@ -7,12 +7,12 @@ from tail import Tail
 
 class Field:
     def __init__(self):
-        self._x = 0
-        self._y = 0
-        self._w = config.FIELD_WDT
-        self._h = config.FIELD_HGT
-        self._block_size = config.BLOCK_SIZE
-        self._thickness = config.BORDER_THICKNESS
+        self.x = 0
+        self.y = 0
+        self.w = config.FIELD_WDT
+        self.h = config.FIELD_HGT
+        self.block_size = config.BLOCK_SIZE
+        self.thickness = config.BORDER_THICKNESS
         self._col = config.FIELD_COL
 
         self._field = []
@@ -23,14 +23,14 @@ class Field:
         self._tail: Tail = None
 
     def _init_field(self):
-        for y in range(self._h):
+        for y in range(self.h):
             self._field.append([])
-            for x in range(self._w):
+            for x in range(self.w):
                 v = 0
-                if any((x in range(self._thickness),
-                        x in (self._w - i for i in range(1, self._thickness + 1)),
-                        y in range(self._thickness),
-                        y in (self._h - i for i in range(1, self._thickness + 1)))):
+                if any((x in range(self.thickness),
+                        x in (self.w - i for i in range(1, self.thickness + 1)),
+                        y in range(self.thickness),
+                        y in (self.h - i for i in range(1, self.thickness + 1)))):
                     v = 1
                 self._field[-1].append(v)
 
@@ -39,10 +39,10 @@ class Field:
             for j, x in enumerate(y):
                 if x == 0:
                     continue
-                px.rect(self._x + j * self._block_size,
-                        self._y + i * self._block_size,
-                        self._block_size,
-                        self._block_size,
+                px.rect(self.x + j * self.block_size,
+                        self.y + i * self.block_size,
+                        self.block_size,
+                        self.block_size,
                         self._col)
 
     def set_player(self, player: Player):
@@ -51,8 +51,8 @@ class Field:
 
     @property
     def _player_pos(self) -> (int, int):
-        x = (self._player.x - self._x) // self._player.size
-        y = (self._player.y - self._y) // self._player.size
+        x = (self._player.x - self.x) // self._player.size
+        y = (self._player.y - self.y) // self._player.size
         return x, y
 
     @property
@@ -72,22 +72,22 @@ class Field:
                     continue
                 cell_x = dx + x
                 cell_y = dy + y
-                if any((cell_x == -1, cell_x == self._w, cell_y == -1, cell_y == self._h)):
+                if any((cell_x == -1, cell_x == self.w, cell_y == -1, cell_y == self.h)):
                        continue
                 cells.append((cell_x, cell_y, (self._field[cell_y][cell_x])))
         return cells
 
     def _replace_field_vals(self, src: int, dst: int):
-        for y in range(self._h):
-            for x in range(self._w):
+        for y in range(self.h):
+            for x in range(self.w):
                 v = self._field[y][x]
                 if v == src:
                     self._field[y][x] = dst
 
     def _count_cells(self, val: int) -> int:
         num = 0
-        for y in range(self._h):
-            for x in range(self._w):
+        for y in range(self.h):
+            for x in range(self.w):
                 v = self._field[y][x]
                 if v == val:
                     num += 1
@@ -104,22 +104,22 @@ class Field:
     def _fill_tail(self):
         for coord in self._tail:
             x, y = coord
-            x = (x - self._x) // self._tail.size
-            y = (y - self._y) // self._tail.size
+            x = (x - self.x) // self._tail.size
+            y = (y - self.y) // self._tail.size
             self._field[y][x] = 1
 
     def _fill_left_top_part(self):
-        for y in range(self._h):
-            for x in range(self._w):
+        for y in range(self.h):
+            for x in range(self.w):
                 v = self._field[y][x]
                 if v == 0:
                     self._flood_fill(x, y, 2)
                     return
 
     def _fill_right_bottom_part(self):
-        for y in range(self._h):
-            for x in range(self._w):
-                x, y = self._w-x-1, self._h-y-1
+        for y in range(self.h):
+            for x in range(self.w):
+                x, y = self.w-x-1, self.h-y-1
                 v = self._field[y][x]
                 if v == 0:
                     self._flood_fill(x, y, 3)
@@ -147,22 +147,22 @@ class Field:
             case PlayerMoveStatus.Stop:
                 pass
             case PlayerMoveStatus.Up:
-                if self._player_pos[1] == self._y:
+                if self._player_pos[1] == self.y:
                     self._player.move_status = PlayerMoveStatus.Stop
                 else:
                     self._player.up()
             case PlayerMoveStatus.Down:
-                if self._player_pos[1] == self._h-1:
+                if self._player_pos[1] == self.h-1:
                     self._player.move_status = PlayerMoveStatus.Stop
                 else:
                     self._player.down()
             case PlayerMoveStatus.Left:
-                if self._player_pos[0] == self._x:
+                if self._player_pos[0] == self.x:
                     self._player.move_status = PlayerMoveStatus.Stop
                 else:
                     self._player.left()
             case PlayerMoveStatus.Right:
-                if self._player_pos[0] == self._w-1:
+                if self._player_pos[0] == self.w-1:
                     self._player.move_status = PlayerMoveStatus.Stop
                 else:
                     self._player.right()
@@ -178,8 +178,8 @@ class Field:
     def intersect(self, x: int, y: int) -> bool:
         _x = x // config.BLOCK_SIZE
         _y = y // config.BLOCK_SIZE
-        return (0 < x < self._w * self._block_size and
-                0 < y < self._h * self._block_size and
+        return (0 <= x < self.w * self.block_size and
+                0 <= y < self.h * self.block_size and
                 self._field[_y][_x] == 1)
 
     def draw(self):

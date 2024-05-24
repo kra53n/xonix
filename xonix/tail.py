@@ -7,6 +7,7 @@ class Tail(list):
     def __init__(self):
         self.size = config.BLOCK_SIZE
         self._col = config.TAIL_COL
+        self.have_come = False
 
     def append(self, coord: tuple[int, int]):
         super().append(coord)
