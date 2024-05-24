@@ -1,3 +1,5 @@
+from collections import deque
+
 import pyxel as px
 
 import config
@@ -94,12 +96,15 @@ class Field:
         return num
         
     def _flood_fill(self, x: int, y: int, val: int):
-        self._field[y][x] = val
-        cells = self._get_cells_around_cell(x, y)
-        for cell in cells:
-            if cell[-1] in (1, val):
+        s = deque()
+        s.append((x, y, self._field[y][x]))
+        while s:
+            curr_cell = s.pop()
+            x, y, c = curr_cell
+            if c in (1, val):
                 continue
-            self._flood_fill(cell[0], cell[1], val)
+            self._field[y][x] = val
+            s.extend(self._get_cells_around_cell(x, y))
 
     def _fill_tail(self):
         for coord in self._tail:
