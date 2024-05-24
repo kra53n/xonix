@@ -187,6 +187,12 @@ class Field:
                 0 <= y < self.h * self.block_size and
                 self._field[_y][_x] == 1)
 
+    def get_empty_cells_coords(self) -> tuple[tuple[int, int]]:
+        return tuple((x * self.block_size + self.x, y * self.block_size + self.y)
+                     for x in range(self.w)
+                     for y in range(self.h)
+                     if self._field[y][x] == 0)
+
     def draw(self):
         self._draw_field()
 

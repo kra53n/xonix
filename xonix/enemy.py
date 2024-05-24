@@ -27,8 +27,10 @@ class Enemy:
         self._tail = tail
 
     def _move(self):
-        self.x += int(self._offset * self._x_direction)
-        self.y += int(self._offset * self._y_direction)
+        if px.frame_count % 12:
+            return
+        self.x += self._offset * self._x_direction
+        self.y += self._offset * self._y_direction
 
     def _process_intersection_with_field(self):
         if self._field.intersect(self.x, self.y):
@@ -81,10 +83,15 @@ class Enemy:
                 self.y -= self._offset * 2
                 self._y_direction *= -1
 
+    def _process_stuck(self):
+        if self._field.intersect(self.x, self.y):
+            self.x, self.y = choice(self._field.get_empty_cells_coords())
+
     def update(self):
         if not self._tail.have_come:
             self._move()
         self._process_intersection_with_field()
+        self._process_stuck()
         if (self.x, self.y) in self._tail:
             self._tail.have_come = True
 
