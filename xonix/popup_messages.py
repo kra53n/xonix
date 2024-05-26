@@ -27,6 +27,7 @@ class GameOverMessage(PopupMessage):
             self._scenes.pop()
             self._scenes.pop()
 
+
 class WinMessage(PopupMessage):
     def __init__(self, scenes: deque):
         super().__init__(scenes, 'Win')

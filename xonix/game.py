@@ -20,9 +20,6 @@ class Game:
         self._player.set_tail(self._tail)
         self._field.set_player(self._player)
         self._field.set_tail(self._tail)
-        for enemy in self._enemies:
-            enemy.set_field(self._field)
-            enemy.set_tail(self._tail)
     
     def draw(self):
         px.cls(0)
@@ -37,7 +34,7 @@ class Game:
         self._player.update()
         self._tail.update()
         for enemy in self._enemies:
-            enemy.update()
+            enemy.update(self._field, self._tail)
 
         if (self._player.is_stepped_on_tail or
             self._tail.have_come):
