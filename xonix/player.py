@@ -27,29 +27,29 @@ class Player:
         self.prev_on_field: int = None
         self.on_field: int = None
 
-        self._tail: Tail = None
+        self.tail = Tail()
 
     @property
     def is_stepped_on_tail(self) -> bool:
-        return (self.x, self.y) in self._tail
+        return (self.x, self.y) in self.tail
 
     def set_tail(self, tail: Tail):
-        self._tail = tail
+        self.tail = tail
 
     def up(self):
-        self._tail.append((self.x, self.y))
+        self.tail.append((self.x, self.y))
         self.y -= self._offset
 
     def down(self):
-        self._tail.append((self.x, self.y))
+        self.tail.append((self.x, self.y))
         self.y += self._offset
 
     def left(self):
-        self._tail.append((self.x, self.y))
+        self.tail.append((self.x, self.y))
         self.x -= self._offset
 
     def right(self):
-        self._tail.append((self.x, self.y))
+        self.tail.append((self.x, self.y))
         self.x += self._offset
 
     def update(self):
@@ -69,5 +69,8 @@ class Player:
             self.move_status != PlayerMoveStatus.Left):
             self.move_status = PlayerMoveStatus.Right
 
+        self.tail.update()
+
     def draw(self):
+        self.tail.draw()
         px.rect(self.x, self.y, self.size, self.size, self._col)
