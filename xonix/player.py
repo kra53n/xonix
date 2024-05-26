@@ -24,6 +24,8 @@ class Player:
         self._col = config.PLAYER_COL
 
         self.move_status = PlayerMoveStatus.Stop
+        self.prev_on_field: int = None
+        self.on_field: int = None
 
         self._tail: Tail = None
 

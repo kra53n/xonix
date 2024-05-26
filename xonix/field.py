@@ -20,9 +20,7 @@ class Field:
         self._field = []
         self._init_field()
 
-        self._player: Player = None
         self._prev_player_on_field: int = None
-        self._tail: Tail = None
 
     def _init_field(self):
         for y in range(self.h):
@@ -36,34 +34,14 @@ class Field:
                     v = 1
                 self._field[-1].append(v)
 
-    def _draw_field(self):
-        for i, y in enumerate(self._field):
-            for j, x in enumerate(y):
-                if x == 0:
-                    continue
-                px.rect(self.x + j * self.block_size,
-                        self.y + i * self.block_size,
-                        self.block_size,
-                        self.block_size,
-                        self._col)
-
-    def set_player(self, player: Player):
-        self._player = player
-        self._prev_player_on_field = self._player_on_field
-
-    @property
-    def _player_pos(self) -> (int, int):
-        x = (self._player.x - self.x) // self._player.size
-        y = (self._player.y - self.y) // self._player.size
+    def obj_relative_pos(self, obj, scale: int) -> (int, int):
+        x = (obj.x - self.x) // scale
+        y = (obj.y - self.y) // scale
         return x, y
 
-    @property
-    def _player_on_field(self) -> int:
-        x, y = self._player_pos
+    def obj_on_field(self, obj, scale: int) -> int:
+        x, y = self.obj_relative_pos(obj, scale)
         return self._field[y][x]
-
-    def set_tail(self, tail: Tail):
-        self._tail = tail
 
     def _get_cells_around_cell(self, x: int, y: int) -> list[tuple[int, int, int]]:
         directions = (-1, 0, 1)
@@ -106,11 +84,11 @@ class Field:
             self._field[y][x] = val
             s.extend(self._get_cells_around_cell(x, y))
 
-    def _fill_tail(self):
-        for coord in self._tail:
+    def _fill_tail(self, tail: Tail):
+        for coord in tail:
             x, y = coord
-            x = (x - self.x) // self._tail.size
-            y = (y - self.y) // self._tail.size
+            x = (x - self.x) // tail.size
+            y = (y - self.y) // tail.size
             self._field[y][x] = 1
 
     def _fill_left_top_part(self):
@@ -130,8 +108,8 @@ class Field:
                     self._flood_fill(x, y, 3)
                     return
 
-    def _process_tail_filling(self):
-        self._fill_tail()
+    def process_filling(self, tail: Tail):
+        self._fill_tail(tail)
         self._fill_left_top_part()
         self._fill_right_bottom_part()
         left_top = self._count_cells(2)
@@ -144,33 +122,8 @@ class Field:
         else:
             self._replace_field_vals(3, 1)
             self._replace_field_vals(2, 0)
-        
 
-    def _move_player(self):
-        match self._player.move_status:
-            case PlayerMoveStatus.Stop:
-                pass
-            case PlayerMoveStatus.Up:
-                if self._player_pos[1] == self.y:
-                    self._player.move_status = PlayerMoveStatus.Stop
-                else:
-                    self._player.up()
-            case PlayerMoveStatus.Down:
-                if self._player_pos[1] == self.h-1:
-                    self._player.move_status = PlayerMoveStatus.Stop
-                else:
-                    self._player.down()
-            case PlayerMoveStatus.Left:
-                if self._player_pos[0] == self.x:
-                    self._player.move_status = PlayerMoveStatus.Stop
-                else:
-                    self._player.left()
-            case PlayerMoveStatus.Right:
-                if self._player_pos[0] == self.w-1:
-                    self._player.move_status = PlayerMoveStatus.Stop
-                else:
-                    self._player.right()
-
+    # TODO: refactor according next name for the function `intersect_with_obj`
     def intersect(self, x: int, y: int) -> bool:
         _x = x // config.BLOCK_SIZE
         _y = y // config.BLOCK_SIZE
@@ -189,15 +142,12 @@ class Field:
         return sum(1 for x in range(self.w) for y in range(self.h) if self._field[y][x]) / self.w / self.h
 
     def draw(self):
-        self._draw_field()
-
-    def update(self):
-        self._move_player()
-
-        if self._prev_player_on_field == 1:
-            self._tail.clear()
-        elif self._prev_player_on_field == 0 and self._player_on_field == 1:
-            self._player.move_status = PlayerMoveStatus.Stop
-            self._process_tail_filling()
-            self._tail.clear()
-        self._prev_player_on_field = self._player_on_field
+        for i, y in enumerate(self._field):
+            for j, x in enumerate(y):
+                if x == 0:
+                    continue
+                px.rect(self.x + j * self.block_size,
+                        self.y + i * self.block_size,
+                        self.block_size,
+                        self.block_size,
+                        self._col)
