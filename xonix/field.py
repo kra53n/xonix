@@ -123,10 +123,9 @@ class Field:
             self._replace_field_vals(3, 1)
             self._replace_field_vals(2, 0)
 
-    # TODO: refactor according next name for the function `intersect_with_obj`
-    def intersect(self, x: int, y: int) -> bool:
-        _x = x // config.BLOCK_SIZE
-        _y = y // config.BLOCK_SIZE
+    def intersect(self, x: int, y: int, scale: int) -> bool:
+        _x = x // scale
+        _y = y // scale
         return (0 <= x < self.w * self.block_size and
                 0 <= y < self.h * self.block_size and
                 self._field[_y][_x] == 1)

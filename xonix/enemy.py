@@ -25,58 +25,58 @@ class Enemy:
         self.y += self._offset * self._y_direction
 
     def _process_intersection_with_field(self, field: Field):
-        if field.intersect(self.x, self.y):
+        if field.intersect(self.x, self.y, self.size):
             # top left
-            if (field.intersect(self.x + self._offset, self.y) and
-                field.intersect(self.x, self.y + self._offset) and
-                not field.intersect(self.x + self._offset, self.y + self._offset)):
+            if (field.intersect(self.x + self._offset, self.y, self.size) and
+                field.intersect(self.x, self.y + self._offset, self.size) and
+                not field.intersect(self.x + self._offset, self.y + self._offset, self.size)):
                 self.x += self._offset * 2
                 self.y += self._offset * 2
                 self._x_direction *= -1
                 self._y_direction *= -1
             # top right
-            elif (field.intersect(self.x - self._offset, self.y) and
-                field.intersect(self.x, self.y + self._offset) and
-                not field.intersect(self.x - self._offset, self.y + self._offset)):
+            elif (field.intersect(self.x - self._offset, self.y, self.size) and
+                field.intersect(self.x, self.y + self._offset, self.size) and
+                not field.intersect(self.x - self._offset, self.y + self._offset, self.size)):
                 self.x -= self._offset * 2
                 self.y += self._offset * 2
                 self._x_direction *= -1
                 self._y_direction *= -1
             # bottom left
-            elif (field.intersect(self.x + self._offset, self.y) and
-                field.intersect(self.x, self.y - self._offset) and
-                not field.intersect(self.x + self._offset, self.y - self._offset)):
+            elif (field.intersect(self.x + self._offset, self.y, self.size) and
+                field.intersect(self.x, self.y - self._offset, self.size) and
+                not field.intersect(self.x + self._offset, self.y - self._offset, self.size)):
                 self.x += self._offset * 2
                 self.y -= self._offset * 2
                 self._x_direction *= -1
                 self._y_direction *= -1
             # bottom right
-            elif (field.intersect(self.x - self._offset, self.y) and
-                field.intersect(self.x, self.y - self._offset) and
-                not field.intersect(self.x - self._offset, self.y - self._offset)):
+            elif (field.intersect(self.x - self._offset, self.y, self.size) and
+                field.intersect(self.x, self.y - self._offset, self.size) and
+                not field.intersect(self.x - self._offset, self.y - self._offset, self.size)):
                 self.x -= self._offset * 2
                 self.y -= self._offset * 2
                 self._x_direction *= -1
                 self._y_direction *= -1
             # right
-            elif not field.intersect(self.x + self._offset, self.y):
+            elif not field.intersect(self.x + self._offset, self.y, self.size):
                 self.x += self._offset * 2
                 self._x_direction *= -1
             # left
-            elif not field.intersect(self.x - self._offset, self.y):
+            elif not field.intersect(self.x - self._offset, self.y, self.size):
                 self.x -= self._offset * 2
                 self._x_direction *= -1
             # top
-            elif not field.intersect(self.x, self.y + self._offset):
+            elif not field.intersect(self.x, self.y + self._offset, self.size):
                 self.y += self._offset * 2
                 self._y_direction *= -1
             # bottom
-            elif not field.intersect(self.x, self.y - self._offset):
+            elif not field.intersect(self.x, self.y - self._offset, self.size):
                 self.y -= self._offset * 2
                 self._y_direction *= -1
 
     def _process_stuck(self, field: Field):
-        if field.intersect(self.x, self.y):
+        if field.intersect(self.x, self.y, self.size):
             self.x, self.y = choice(field.get_empty_cells_coords())
 
     def update(self, field: Field, tail: Tail):
