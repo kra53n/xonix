@@ -14,10 +14,11 @@ class Game:
     def __init__(self, scenes: deque):
         self._scenes = scenes
         self._field = Field()
-        self._player = Player(self._field.x + self._field.block_size,
-                              self._field.y + self._field.block_size * 2)
+        self._player = self.spawn_player()
         self._enemies = [Enemy(30, 30)]
-        self._bars = (Bar(2, 2, 'fullness', 1, lambda: f'{int(self._field.fullness*100)}%', 2),)
+        self._lives = 3
+        self._bars = (Bar(2, 2, 'fullness', 1, lambda: f'{int(self._field.fullness*100)}%', 2),
+                      Bar(2, 11, 'lives', 1, lambda: str(self._lives), 2))
     
     def draw(self):
         px.cls(12)
@@ -37,12 +38,24 @@ class Game:
         self.update_game_status()
 
     def update_game_status(self):
-        if (self._player.is_stepped_on_tail or
+        # lose the live
+        if ((self._player.is_stepped_on_tail or
+             self._player.tail.have_come) and
+            self._lives > 0):
+            self._lives -= 1
+            self._player = self.spawn_player()
+        # game over
+        elif (self._player.is_stepped_on_tail or
             self._player.tail.have_come):
             self._scenes.append(GameOverMessage(self._scenes))
+        # win
         elif self._field.fullness >= 0.75:
             self.draw()
             self._scenes.append(WinMessage(self._scenes))
+
+    def spawn_player(self) -> Player:
+        return Player(self._field.x + self._field.block_size,
+                      self._field.y + self._field.block_size * 2)
 
     def move_player(self):
         player_pos = self._field.obj_relative_pos(self._player, self._player.size)
