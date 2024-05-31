@@ -40,4 +40,3 @@ class WinMessage(PopupMessage):
             self._scenes.clear()
         if px.btnp(px.KEY_R):
             self._scenes.pop()
-            self._scenes.pop()

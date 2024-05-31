@@ -4,7 +4,7 @@ import pyxel as px
 
 import config
 import fonts
-from game import Game
+from game import get_next_lvl, Game
 
 
 class App:
@@ -13,7 +13,9 @@ class App:
         fonts.load()
 
         self._scenes = deque()
-        self._scenes.append(Game(self._scenes))
+        self._scenes.append(get_next_lvl(scenes=self._scenes,
+                                         lives=3,
+                                         prev_lvl=-1))
 
         px.run(self._draw, self._update)
 
