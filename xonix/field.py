@@ -9,12 +9,12 @@ from tail import Tail
 
 class Field:
     def __init__(self):
-        self.x = 0
-        self.y = 0
-        self.w = config.FIELD_WDT
-        self.h = config.FIELD_HGT
         self.block_size = config.BLOCK_SIZE
-        self.thickness = config.BORDER_THICKNESS
+        self.x = 0
+        self.y = config.FIELD_Y_OFF
+        self.w = config.FIELD_WDT // self.block_size
+        self.h = config.FIELD_HGT // self.block_size
+        self.thickness = config.BORDER_THICKNESS // self.block_size
         self._col = config.FIELD_COL
 
         self._field = []
@@ -124,10 +124,10 @@ class Field:
             self._replace_field_vals(2, 0)
 
     def intersect(self, x: int, y: int, scale: int) -> bool:
-        _x = x // scale
-        _y = y // scale
-        return (0 <= x < self.w * self.block_size and
-                0 <= y < self.h * self.block_size and
+        _x = (x - self.x) // scale
+        _y = (y - self.y) // scale
+        return (0 <= x - self.x < self.w * self.block_size and
+                0 <= y - self.y < self.h * self.block_size and
                 self._field[_y][_x] == 1)
 
     def get_empty_cells_coords(self) -> tuple[tuple[int, int]]:

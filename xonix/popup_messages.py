@@ -2,6 +2,8 @@ from collections import deque
 
 import pyxel as px
 
+from fonts import fonts
+
 
 class PopupMessage:
     def __init__(self, scenes: deque, message: str):
@@ -9,7 +11,7 @@ class PopupMessage:
         self._message = message
 
     def draw(self):
-        px.text(0, 0, self._message, 5)
+        fonts['inkscript'].draw(0, 0, self._message, 0)
 
     def update(self):
         pass

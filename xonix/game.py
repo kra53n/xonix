@@ -2,6 +2,7 @@ from collections import deque
 
 import pyxel as px
 
+from bar import Bar
 from enemy import Enemy
 from field import Field
 from popup_messages import GameOverMessage, WinMessage
@@ -12,12 +13,16 @@ from tail import Tail
 class Game:
     def __init__(self, scenes: deque):
         self._scenes = scenes
-        self._player = Player(2, 2)
-        self._enemies = [Enemy(6, 6)]
         self._field = Field()
+        self._player = Player(self._field.x + self._field.block_size,
+                              self._field.y + self._field.block_size * 2)
+        self._enemies = [Enemy(30, 30)]
+        self._bars = (Bar(2, 2, 'fullness', 1, lambda: f'{int(self._field.fullness*100)}%', 2),)
     
     def draw(self):
-        px.cls(0)
+        px.cls(12)
+        for bar in self._bars:
+            bar.draw()
         for enemy in self._enemies:
             enemy.draw()
         self._field.draw()
@@ -45,22 +50,22 @@ class Game:
             case PlayerMoveStatus.Stop:
                 pass
             case PlayerMoveStatus.Up:
-                if player_pos[1] == self._field.y:
+                if self._player.y == self._field.y:
                     self._player.move_status = PlayerMoveStatus.Stop
                 else:
                     self._player.up()
             case PlayerMoveStatus.Down:
-                if player_pos[1] == self._field.h-1:
+                if self._player.y + self._player.size == self._field.y + self._field.h * self._field.block_size:
                     self._player.move_status = PlayerMoveStatus.Stop
                 else:
                     self._player.down()
             case PlayerMoveStatus.Left:
-                if player_pos[0] == self._field.x:
+                if self._player.x == self._field.x:
                     self._player.move_status = PlayerMoveStatus.Stop
                 else:
                     self._player.left()
             case PlayerMoveStatus.Right:
-                if player_pos[0] == self._field.w-1:
+                if self._player.x + self._player.size == self._field.x + self._field.w * self._field.block_size:
                     self._player.move_status = PlayerMoveStatus.Stop
                 else:
                     self._player.right()
@@ -77,4 +82,3 @@ class Game:
             self._field.process_filling(self._player.tail)
             self._player.tail.clear()
         self._player.prev_on_field = self._player.on_field
-

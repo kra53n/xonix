@@ -3,12 +3,14 @@ from collections import deque
 import pyxel as px
 
 import config
+import fonts
 from game import Game
 
 
 class App:
     def __init__(self):
         px.init(config.WINDOW_WDT, config.WINDOW_HGT, config.WINDOW_TITLE)
+        fonts.load()
 
         self._scenes = deque()
         self._scenes.append(Game(self._scenes))
