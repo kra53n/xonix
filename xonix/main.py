@@ -5,12 +5,14 @@ import pyxel as px
 import config
 import fonts
 import single_game
+import colorschemes
 
 
 class App:
     def __init__(self):
         px.init(config.WINDOW_WDT, config.WINDOW_HGT, config.WINDOW_TITLE)
         fonts.load()
+        colorschemes.set()
 
         self._scenes = deque()
         self._scenes.append(single_game.get_next_lvl(

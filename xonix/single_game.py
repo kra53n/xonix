@@ -26,7 +26,7 @@ class SingleGame:
         self._bars = self.spawn_bars()
     
     def draw(self):
-        px.cls(12)
+        px.cls(config.BACKGROUND_COL)
         for bar in self._bars:
             bar.draw()
         for enemy in self._enemies:
@@ -66,10 +66,10 @@ class SingleGame:
                       self._field.y + self._field.block_size * 2)
 
     def spawn_bars(self) -> Iterable[Bar]:
-        bars = (Bar(2, 0, 'fullness', 1, lambda: f'{int(self._field.fullness*100)}%', 2),
-                Bar(2, 0, 'score', 1, lambda: str(self.lives), 2),
-                Bar(2, 0, 'lives', 1, lambda: str(self.lives), 2),
-                Bar(2, 0, 'lvl', 1, lambda: str(self.lvl+1), 2))
+        bars = (Bar(2, 0, 'fullness', config.TEXT1_COL, lambda: f'{int(self._field.fullness*100)}%', config.TEXT2_COL),
+                Bar(2, 0, 'score', config.TEXT1_COL, lambda: str(self.lives), config.TEXT2_COL),
+                Bar(2, 0, 'lives', config.TEXT1_COL, lambda: str(self.lives), config.TEXT2_COL),
+                Bar(2, 0, 'lvl', config.TEXT1_COL, lambda: str(self.lvl+1), config.TEXT2_COL))
         letter_sz = fonts['inkscript'].letter_sz
         off = 2
         for i, bar in enumerate(bars):
