@@ -9,7 +9,7 @@ from tail import Tail
 
 
 class Enemy:
-    def __init__(self, x: int, y: int):
+    def __init__(self, x: int = None, y: int = None):
         self.x = x
         self.y = y
         self._x_direction = choice((-1, 1))

@@ -1,7 +1,9 @@
 from collections import deque
+from random import randrange
 
 import pyxel as px
 
+import config
 from bar import Bar
 from typing import Iterable
 
@@ -11,8 +13,6 @@ from field import Field
 from popup_messages import GameOverMessage, WinMessage
 from player import Player, PlayerMoveStatus
 from tail import Tail
-
-
 
 
 class Game:
@@ -119,18 +119,27 @@ class Game:
 def get_next_lvl(scenes: deque, lives, prev_lvl: int):
     lvl = prev_lvl + 1
     common = {'scenes': scenes, 'lives': lives, 'lvl': lvl}
-    lvls = (
+    x_enemy = lambda: randrange(config.BORDER_THICKNESS, config.FIELD_WDT, config.BLOCK_SIZE)
+    y_enemy = lambda: randrange(config.FIELD_Y_OFF + config.BORDER_THICKNESS, config.FIELD_HGT, config.BLOCK_SIZE)
+    lvls = [
         lambda: Game(
             **common,
-            enemies=(Enemy(30, 30),)
+            enemies=(Enemy(x_enemy(), y_enemy()),)
         ),
         lambda: Game(
             **common,
             enemies=(
-                Enemy(30, 30),
-                Enemy(40, 60),
+                Enemy(x_enemy(), y_enemy()),
+                Enemy(x_enemy(), y_enemy()),
             )
         ),
-    )
+    ]
+    # NOTE: level generation was not written in the proper way, after
+    # implementing othe stuff may be possible to rewrite it
+    for i in range(3, 20):
+        lvls.append(lambda i=i: Game(
+            **common,
+            enemies=tuple(Enemy(x_enemy(), y_enemy()) for _ in range(i)),
+        ))
     game = lvls[lvl] if lvl < len(lvls) else lvls[-1]
     return game()

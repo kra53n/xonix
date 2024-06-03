@@ -138,7 +138,12 @@ class Field:
 
     @property
     def fullness(self) -> float:
-        return sum(1 for x in range(self.w) for y in range(self.h) if self._field[y][x]) / self.w / self.h
+        w = self.w - self.thickness
+        h = self.h - self.thickness
+        return sum(1
+                   for x in range(self.thickness, w)
+                   for y in range(self.thickness, h)
+                   if self._field[y][x]) / w / h
 
     def draw(self):
         for i, y in enumerate(self._field):
