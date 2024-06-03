@@ -33,7 +33,6 @@ class SingleGame:
             enemy.draw()
         self._field.draw()
         self._player.draw()
-        self._scenes.append(GameOverMessage(self._scenes))
 
     def update(self):
         self.update_field()
@@ -57,9 +56,8 @@ class SingleGame:
         # win
         elif self._field.fullness >= 0.75:
             self.draw()
-            self._scenes.append(WinMessage(self._scenes))
-            self._scenes.pop()
             self._scenes.append(get_next_lvl(self._scenes, self.lives, self.lvl))
+            self._scenes.append(WinMessage(self._scenes))
 
 
     def spawn_player(self) -> Player:
@@ -68,7 +66,6 @@ class SingleGame:
 
     def spawn_bars(self) -> Iterable[Bar]:
         bars = (Bar(2, 0, 'fullness', config.TEXT1_COL, lambda: f'{int(self._field.fullness*100)}%', config.TEXT2_COL),
-                Bar(2, 0, 'score', config.TEXT1_COL, lambda: str(self.lives), config.TEXT2_COL),
                 Bar(2, 0, 'lives', config.TEXT1_COL, lambda: str(self.lives), config.TEXT2_COL),
                 Bar(2, 0, 'lvl', config.TEXT1_COL, lambda: str(self.lvl+1), config.TEXT2_COL))
         letter_sz = fonts['inkscript'].letter_sz
@@ -117,7 +114,7 @@ class SingleGame:
         self._player.prev_on_field = self._player.on_field
 
 
-def get_next_lvl(scenes: deque, lives, prev_lvl: int):
+def get_next_lvl(scenes: deque, lives: int, prev_lvl: int):
     lvl = prev_lvl + 1
     common = {'scenes': scenes, 'lives': lives, 'lvl': lvl}
     x_enemy = lambda: randrange(config.BORDER_THICKNESS, config.FIELD_WDT, config.BLOCK_SIZE)

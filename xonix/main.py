@@ -6,25 +6,17 @@ import config
 import fonts
 import single_game
 import colorschemes
-
-
-
-
-
-from popup_messages import GameOverMessage
+from main_menu import MainMenu
 
 
 class App:
     def __init__(self):
-        px.init(config.WINDOW_WDT, config.WINDOW_HGT, config.WINDOW_TITLE)
+        px.init(config.WINDOW_WDT, config.WINDOW_HGT, config.WINDOW_TITLE, quit_key=False)
         fonts.load()
         colorschemes.set()
 
         self._scenes = deque()
-        self._scenes.append(single_game.get_next_lvl(
-            scenes=self._scenes,
-            lives=3,
-            prev_lvl=3))
+        self._scenes.append(MainMenu(self._scenes))
 
         px.run(self._draw, self._update)
 

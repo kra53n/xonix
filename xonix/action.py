@@ -12,3 +12,7 @@ def move_player_left():
 
 def move_player_right():
     return px.btnp(px.KEY_RIGHT) or px.btnp(px.KEY_D)
+
+
+def resume():
+    return px.btnp(px.KEY_SPACE) or px.btnp(px.KEY_RETURN)
