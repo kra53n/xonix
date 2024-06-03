@@ -8,6 +8,12 @@ import single_game
 import colorschemes
 
 
+
+
+
+from popup_messages import GameOverMessage
+
+
 class App:
     def __init__(self):
         px.init(config.WINDOW_WDT, config.WINDOW_HGT, config.WINDOW_TITLE)

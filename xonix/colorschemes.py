@@ -25,6 +25,6 @@ palletes = (
 )
 
 def set():
-    idx = 0
+    idx = 1
     for i, col in palletes[idx].items():
         px.colors[i] = col

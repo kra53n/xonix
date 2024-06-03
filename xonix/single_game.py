@@ -33,6 +33,7 @@ class SingleGame:
             enemy.draw()
         self._field.draw()
         self._player.draw()
+        self._scenes.append(GameOverMessage(self._scenes))
 
     def update(self):
         self.update_field()
