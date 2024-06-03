@@ -15,7 +15,7 @@ from player import Player, PlayerMoveStatus
 from tail import Tail
 
 
-class Game:
+class SingleGame:
     def __init__(self, scenes: deque, lives: int, lvl: int, enemies: Iterable[Enemy]):
         self._scenes = scenes
         self._field = Field()
@@ -122,24 +122,25 @@ def get_next_lvl(scenes: deque, lives, prev_lvl: int):
     x_enemy = lambda: randrange(config.BORDER_THICKNESS, config.FIELD_WDT, config.BLOCK_SIZE)
     y_enemy = lambda: randrange(config.FIELD_Y_OFF + config.BORDER_THICKNESS, config.FIELD_HGT, config.BLOCK_SIZE)
     lvls = [
-        lambda: Game(
+        lambda: SingleGame(
             **common,
-            enemies=(Enemy(x_enemy(), y_enemy()),)
+            enemies=(Enemy(x_enemy(), y_enemy(), min_delay=12, max_delay=12),)
         ),
-        lambda: Game(
+        lambda: SingleGame(
             **common,
             enemies=(
-                Enemy(x_enemy(), y_enemy()),
-                Enemy(x_enemy(), y_enemy()),
+                Enemy(x_enemy(), y_enemy(), min_delay=10, max_delay=10),
+                Enemy(x_enemy(), y_enemy(), min_delay=10, max_delay=10),
             )
         ),
     ]
     # NOTE: level generation was not written in the proper way, after
     # implementing othe stuff may be possible to rewrite it
     for i in range(3, 20):
-        lvls.append(lambda i=i: Game(
+        lvls.append(lambda i=i: SingleGame(
             **common,
-            enemies=tuple(Enemy(x_enemy(), y_enemy()) for _ in range(i)),
+            enemies=tuple(Enemy(x_enemy(), y_enemy(), min_delay=1, max_delay=randrange(1, 11))
+                          for _ in range(i)),
         ))
     game = lvls[lvl] if lvl < len(lvls) else lvls[-1]
     return game()

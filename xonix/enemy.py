@@ -1,4 +1,4 @@
-from random import choice
+from random import choice, randint
 
 import pyxel as px
 
@@ -9,23 +9,31 @@ from tail import Tail
 
 
 class Enemy:
-    def __init__(self, x: int = None, y: int = None):
+    def __init__(self, x: int, y: int, min_delay:int, max_delay: int):
         self.x = x
         self.y = y
+        self.min_delay = min_delay
+        self.max_delay = max_delay
+        self.curr_delay = self._get_random_delay()
         self._x_direction = choice((-1, 1))
         self._y_direction = choice((-1, 1))
         self._offset = config.BLOCK_SIZE
         self.size = config.BLOCK_SIZE
         self._col = config.ENEMY_COL
 
+    def _get_random_delay(self) -> int:
+        return randint(self.min_delay, self.max_delay)
+
     def _move(self):
-        if px.frame_count % 12:
+        if px.frame_count % self.curr_delay:
             return
         self.x += self._offset * self._x_direction
         self.y += self._offset * self._y_direction
 
     def _process_intersection_with_field(self, field: Field):
         if field.intersect(self.x, self.y, self.size):
+            self.curr_delay = self._get_random_delay()
+
             # top left
             if (field.intersect(self.x + self._offset, self.y, self.size) and
                 field.intersect(self.x, self.y + self._offset, self.size) and
