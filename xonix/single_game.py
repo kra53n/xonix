@@ -7,6 +7,7 @@ import config
 from bar import Bar
 from typing import Iterable
 
+import colorschemes
 from enemy import Enemy
 from fonts import fonts
 from field import Field
@@ -24,6 +25,10 @@ class SingleGame:
         self.lives = lives
         self.lvl = lvl
         self._bars = self.spawn_bars()
+        # execute functions in deque when update function calling
+        self.exec_later = deque([
+            lambda lvl=self.lvl: colorschemes.set(lvl % len(colorschemes.palletes)),
+        ])
     
     def draw(self):
         px.cls(config.BACKGROUND_COL)
@@ -35,6 +40,8 @@ class SingleGame:
         self._player.draw()
 
     def update(self):
+        while self.exec_later:
+            self.exec_later.pop()()
         self.update_field()
         self._player.update()
         for enemy in self._enemies:
