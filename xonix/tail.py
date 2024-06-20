@@ -4,9 +4,9 @@ import config
 
 
 class Tail(list):
-    def __init__(self):
+    def __init__(self, col: int = config.TAIL_COL):
         self.size = config.BLOCK_SIZE
-        self._col = config.TAIL_COL
+        self._col = col
         self.have_come = False
 
     def append(self, coord: tuple[int, int]):

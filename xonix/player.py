@@ -16,22 +16,31 @@ class PlayerMoveStatus(enum.Enum):
 
 
 class Player:
-    def __init__(self, x: int, y: int):
+    def __init__(
+        self,
+        x: int,
+        y: int,
+        col: int = config.PLAYER_COL,
+        tail_col: int = config.TAIL_COL,
+    ):
         self.x = x
         self.y = y
         self._offset = config.BLOCK_SIZE
         self.size = config.BLOCK_SIZE
-        self._col = config.PLAYER_COL
+        self._col = col
 
         self.move_status = PlayerMoveStatus.Stop
         self.prev_on_field: int = None
         self.on_field: int = None
 
-        self.tail = Tail()
+        self.tail = Tail(tail_col)
 
     @property
     def is_stepped_on_tail(self) -> bool:
         return (self.x, self.y) in self.tail
+
+    def is_stepped_on_other_tail(self, tail: Tail) -> bool:
+        return (self.x, self.y) in tail
 
     def set_tail(self, tail: Tail):
         self.tail = tail
@@ -73,4 +82,10 @@ class Player:
 
     def draw(self):
         self.tail.draw()
+        self.draw_only_player()
+
+    def draw_only_player(self):
         px.rect(self.x, self.y, self.size, self.size, self._col)
+
+    def draw_tail(self):
+        self.tail.draw()
