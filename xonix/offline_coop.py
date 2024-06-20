@@ -11,14 +11,22 @@ from bar import Bar
 from enemy import Enemy
 from fonts import fonts
 from field import Field
-from popup_messages import GameOverMessage, WinMessage
+from popup_messages import GameOverMessage, WinMessage, GetPlayersInput
 from player import Player, PlayerMoveStatus
 from lvls import get_next_lvl
 from tail import Tail
 
 
-class SingleGame:
-    def __init__(self, scenes: deque, lives: int, lvl: int, enemies: Iterable[Enemy]):
+class OfflineCoop:
+    def __init__(
+            self,
+            scenes: deque,
+            lives: int,
+            lvl: int,
+            enemies: Iterable[Enemy],
+            player1_keys: tuple | None = None,
+            player2_keys: tuple | None = None,
+    ):
         self._scenes = scenes
         self._field = Field()
         self._player = self.spawn_player()
@@ -26,10 +34,17 @@ class SingleGame:
         self.lives = lives
         self.lvl = lvl
         self._bars = self.spawn_bars()
+
+        # the values setting after PlayerInput execution if they are None
+        self.player1_keys: tuple | None = player1_keys
+        self.player2_keys: tuple | None = player2_keys
+        
         # execute functions in deque when update function calling
         self.exec_later = deque([
             lambda lvl=self.lvl: colorschemes.set(lvl % len(colorschemes.palletes)),
         ])
+        if not (self.player1_keys and self.player2_keys):
+            self.exec_later.append(lambda: self._scenes.append(GetPlayersInput(self._scenes)))
     
     def draw(self):
         px.cls(config.BACKGROUND_COL)
@@ -43,6 +58,7 @@ class SingleGame:
     def update(self):
         while self.exec_later:
             self.exec_later.pop()()
+
         self.update_field()
         self._player.update()
         for enemy in self._enemies:
@@ -65,7 +81,14 @@ class SingleGame:
         elif self._field.fullness >= 0.75:
             self.draw()
             self._scenes.pop()
-            self._scenes.append(get_next_lvl(SingleGame, self._scenes, self.lives, self.lvl))
+            self._scenes.append(get_next_lvl(
+                OfflineCoop,
+                self._scenes,
+                self.lives,
+                self.lvl,
+                player1_keys=self.player1_keys,
+                player2_keys=self.player2_keys,
+            ))
             self._scenes.append(WinMessage(self._scenes))
 
 

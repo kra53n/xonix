@@ -6,8 +6,10 @@ import action
 import config
 import utils
 from fonts import fonts
-import single_game
+from single_game import SingleGame
+from offline_coop import OfflineCoop
 from popup_messages import About
+from lvls import get_next_lvl
 
 
 class MainMenu:
@@ -24,8 +26,9 @@ class MainMenu:
         )
 
         self.options = (
-            (lambda: single_game.get_next_lvl(self.scenes, lives=3, prev_lvl=-1), 'Play'),
-            # (lambda: print('coming soon'), 'Coop'),
+            (lambda: get_next_lvl(SingleGame, self.scenes, lives=3, prev_lvl=-1), 'Play'),
+            (lambda: get_next_lvl(OfflineCoop, self.scenes, lives=3, prev_lvl=-1), 'Offline coop'),
+            # (lambda: print('coming soon'), 'Online coop'),
             (lambda: About(self.scenes), 'About'),
         )
         self.curr_option_idx = 0
