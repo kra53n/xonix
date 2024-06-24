@@ -50,6 +50,8 @@ class Server(PopupMessage):
             self.cursor_pos += 1
             if self.cursor_pos >= len(self.addrs):
                 self.cursor_pos = len(self.addrs) - 1
+        if px.btnp(px.KEY_ESCAPE):
+            self._scenes.pop()
         if action.resume():
             pass
 
@@ -64,6 +66,69 @@ class Server(PopupMessage):
             config.WINDOW_WDT, config.WINDOW_HGT)
 
 
+class Client(PopupMessage):
+    def __init__(self, scenes: deque):
+        super().__init__(scenes, 'Connect2server')
+        self.y = 12
+        self.addr_classes = ('0', '0', '0', '0')
+        self.cursor_pos = 0
+
+        self.letter_w = 3
+        self.letter_h = 5
+        self.letter_pd = 1
+        self.addr_x, self.addr_y = self.get_addr_pos()
+
+    def draw(self):
+        px.cls(config.BACKGROUND_COL)
+        super().draw()
+        self.draw_addr_classes()
+        if utils.flicker(0.7):
+            self.draw_cursor()
+
+    def update(self):
+        if px.btnp(px.KEY_ESCAPE):
+            self._scenes.pop()
+        if action.move_player_left():
+            self.cursor_pos -=1
+            if self.cursor_pos < 0:
+                self.cursor_pos = len(self.addr_classes) - 1
+        if action.move_player_right():
+            self.cursor_pos += 1
+            if self.cursor_pos >= len(self.addr_classes):
+                self.cursor_pos = 0
+        for digit in range(10):
+            if px.btnp(px.KEY_0 + digit):
+                print(digit)
+
+    def get_addr_pos(self) -> (int, int):
+        w = (self.letter_w + 1) * len('192.168.101.101') - 1
+        return utils.centerize_rect_in_rect(
+            w, self.letter_h,
+            0, 0,
+            config.WINDOW_WDT, config.WINDOW_HGT)
+
+    def draw_cursor(self):
+        px.rect(
+            self.addr_x + self.cursor_pos * ((self.letter_w + 1) * 3 - 1 + 4),
+            self.addr_y + self.letter_h + 2,
+            (self.letter_w + self.letter_pd) * 3 - self.letter_pd,
+            1,
+            config.TEXT2_COL)
+
+    def draw_addr_classes(self):
+        x = self.addr_x
+        y = self.addr_y
+        for i, c in enumerate(self.addr_classes):
+            empty_digits = 3 - len(c)
+            x += empty_digits * (self.letter_w + self.letter_pd)
+            if len(c):
+                col = config.TEXT2_COL if i == self.cursor_pos else config.TEXT1_COL
+                px.text(x, y, c, col)
+            x += len(c) * (self.letter_w + self.letter_pd)
+            px.text(x, y, '.', config.TEXT2_COL)
+            x += self.letter_pd + 2
+
+
 class OnlineCoopMenu(PopupMessage):
     def __init__(self, scenes: deque):
         super().__init__(scenes, 'Online coop')
@@ -71,8 +136,8 @@ class OnlineCoopMenu(PopupMessage):
 
         self.choosed = False
         self.options = (
-            ('Wait user', lambda: self._scenes.append(Server(self._scenes))),
-            ('Connect', lambda: print('connection menu')),
+            ('Wait user', lambda: Server(self._scenes)),
+            ('Connect', lambda: Client(self._scenes)),
         )
         self.option_names = tuple(i[0] for i in self.options)
         self.options_pd = 6
@@ -98,9 +163,11 @@ class OnlineCoopMenu(PopupMessage):
             self.cursor_pos += 1
             if self.cursor_pos >= len(self.options):
                 self.cursor_pos = len(self.options) - 1
+        if px.btnp(px.KEY_ESCAPE):
+            self._scenes.pop()
         if action.resume():
             actn = self.options[self.cursor_pos][1]
-            actn()
+            self._scenes.append(actn())
 
     def get_options_pos(self) -> (int, int):
         self.letter_sz = fonts['inkscript'].letter_sz
