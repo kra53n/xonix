@@ -17,3 +17,12 @@ TAIL_COL = 4
 ENEMY_COL = 5
 TEXT1_COL = 6
 TEXT2_COL = 7
+
+
+SELECTION_CURSOR_DATA = (
+    '--',
+    ' --',
+    '  --',
+    ' --',
+    '--',
+)
