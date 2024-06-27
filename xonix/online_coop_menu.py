@@ -70,7 +70,7 @@ class Client(PopupMessage):
     def __init__(self, scenes: deque):
         super().__init__(scenes, 'Connect2server')
         self.y = 12
-        self.addr_classes = ('0', '0', '0', '0')
+        self.addr_classes = ['0', '0', '0', '0']
         self.cursor_pos = 0
 
         self.letter_w = 3
@@ -88,17 +88,52 @@ class Client(PopupMessage):
     def update(self):
         if px.btnp(px.KEY_ESCAPE):
             self._scenes.pop()
-        if action.move_player_left():
+        if (action.move_player_left() or
+            (px.btn(px.KEY_LSHIFT) or px.btn(px.KEY_RSHIFT)) and
+            px.btnp(px.KEY_TAB)):
             self.cursor_pos -=1
             if self.cursor_pos < 0:
                 self.cursor_pos = len(self.addr_classes) - 1
-        if action.move_player_right():
+        elif action.move_player_right() or px.btnp(px.KEY_TAB):
             self.cursor_pos += 1
             if self.cursor_pos >= len(self.addr_classes):
                 self.cursor_pos = 0
+        if px.btnp(px.KEY_BACKSPACE):
+            self.del_elem_in_addr_class()
         for digit in range(10):
-            if px.btnp(px.KEY_0 + digit):
-                print(digit)
+            key = px.KEY_0 + digit
+            if px.btnp(key):
+                self.edit_addr_class(chr(key))
+                self.switch_addr_class()
+        if action.resume():
+            pass
+
+    def edit_addr_class(self, key: str):
+        # current class
+        cc = self.addr_classes[self.cursor_pos]
+        if cc == '0' or len(cc) == 3:
+            cc = key
+        else:
+            cc += key
+        if int(cc) > 255:
+            cc = '255'
+        self.addr_classes[self.cursor_pos] = cc
+
+    def switch_addr_class(self):
+        cc = self.addr_classes[self.cursor_pos]
+        last_class_elem = self.cursor_pos == len(self.addr_classes) - 1
+        if len(cc) == 3 or cc == '0' and not last_class_elem:
+            self.cursor_pos += 1
+
+    def del_elem_in_addr_class(self):
+        cc = self.addr_classes[self.cursor_pos]
+        if cc == '0':
+            return
+        if len(cc) == 1:
+            cc = '0'
+        else:
+            cc = cc[:-1]
+        self.addr_classes[self.cursor_pos] = cc
 
     def get_addr_pos(self) -> (int, int):
         w = (self.letter_w + 1) * len('192.168.101.101') - 1
