@@ -18,15 +18,13 @@ from tail import Tail
 
 
 class OfflineCoop:
-    def __init__(
-        self,
-        scenes: deque,
-        lives: int,
-        lvl: int,
-        enemies: Iterable[Enemy],
-        player1_keys: tuple | None = None,
-        player2_keys: tuple | None = None,
-    ):
+    def __init__(self,
+                 scenes: deque,
+                 lives: int,
+                 lvl: int,
+                 enemies: Iterable[Enemy],
+                 player1_keys: tuple | None = None,
+                 player2_keys: tuple | None = None):
         self._scenes = scenes
         self._field = Field()
         self._player1 = self.spawn_player1()

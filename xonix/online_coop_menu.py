@@ -1,3 +1,5 @@
+import socketserver
+
 from collections import deque
 from typing import Iterable
 
@@ -8,14 +10,19 @@ import config
 import utils
 
 from fonts import fonts
+from online_coop import connect_to_server
 from popup_messages import PopupMessage
+
+
+class TCPHandler(socketserver.BaseRequestHandler):
+    def handle(self):
+        self.server.addr = self.client_address
 
 
 class Server(PopupMessage):
     def __init__(self, scenes: deque):
         super().__init__(scenes, 'Waiting user')
         self.y = 12
-        self.addrs = self.get_addrs()
         self.cursor_pos = 0
 
         self.letter_w = 3
@@ -23,23 +30,15 @@ class Server(PopupMessage):
         self.addr_x, self.addr_y = self.get_addr_pos()
         self.addr_pd = 12
 
+        self.addrs: Iterable[(str, int)] = []
+
     def draw(self):
         px.cls(config.BACKGROUND_COL)
         super().draw()
-        px.text(self.addr_x, self.addr_y, self.addrs[self.cursor_pos], config.TEXT2_COL)
-        if self.cursor_pos > 0:
-            px.text(
-                self.addr_x + self.addr_pd // 2,
-                self.addr_y - self.addr_pd, self.addrs[self.cursor_pos-1], config.TEXT1_COL)
-        if self.cursor_pos < len(self.addrs):
-            px.text(
-                self.addr_x + self.addr_pd // 2,
-                self.addr_y + self.addr_pd, self.addrs[self.cursor_pos+1], config.TEXT1_COL)
-        if utils.flicker(0.7):
-            utils.draw_selection_cursor(
-                self.addr_x - 8,
-                self.addr_y - (self.letter_h - len(config.SELECTION_CURSOR_DATA)) // 2,
-                1)
+        if self.addrs:
+            self.draw_addrs()
+        else:
+            px.text(self.addr_x, self.addr_y, 'waiting', config.TEXT2_COL if utils.flicker(0.7) else config.TEXT1_COL)
 
     def update(self):
         if action.move_player_up():
@@ -55,8 +54,40 @@ class Server(PopupMessage):
         if action.resume():
             pass
 
-    def get_addrs(self) -> Iterable[str]:
-        return ['192.168.103.' + str(i) for i in range(100, 256)]
+        self.get_new_addrs()
+
+    def draw_addrs(self):
+        px.text(self.addr_x, self.addr_y, self.addrs[self.cursor_pos][0], config.TEXT2_COL)
+        if self.cursor_pos > 0:
+            px.text(
+                self.addr_x + self.addr_pd // 2,
+                self.addr_y - self.addr_pd, self.addrs[self.cursor_pos-1][0], config.TEXT1_COL)
+        if self.cursor_pos < len(self.addrs) - 1:
+            px.text(
+                self.addr_x + self.addr_pd // 2,
+                self.addr_y + self.addr_pd, self.addrs[self.cursor_pos+1][0], config.TEXT1_COL)
+        if utils.flicker(0.7):
+            utils.draw_selection_cursor(
+                self.addr_x - 8,
+                self.addr_y - (self.letter_h - len(config.SELECTION_CURSOR_DATA)) // 2,
+                1)
+
+    def get_new_addrs(self) -> Iterable[str]:
+        addr = None
+        with socketserver.TCPServer((config.HOST, config.PORT), TCPHandler) as s:
+            s.timeout = 0.1
+            s.addr = None
+            s.handle_request()
+            if s.addr:
+                addr = s.addr
+        if not addr:
+            return
+        to_add = True
+        for i in self.addrs:
+            if addr[0] in i[0]:
+                to_add = False
+        if to_add:
+            self.addrs.append(addr)
 
     def get_addr_pos(self) -> (int, int):
         w = (self.letter_w + 1) * len('192.168.101.101') - 1
@@ -106,7 +137,7 @@ class Client(PopupMessage):
                 self.edit_addr_class(chr(key))
                 self.switch_addr_class()
         if action.resume():
-            pass
+            connect_to_server('.'.join(self.addr_classes))
 
     def edit_addr_class(self, key: str):
         # current class
