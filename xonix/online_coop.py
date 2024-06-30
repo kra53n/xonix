@@ -8,12 +8,6 @@ import config
 from enemy import Enemy
 
 
-def connect_to_server(host: str, port: int = config.PORT) -> socket.socket:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.connect((host, port))
-        return sock
-
-
 class Client:
     def __init__(self, scenes: deque):
         pass

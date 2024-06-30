@@ -1,4 +1,4 @@
-import socketserver
+import socket
 
 from collections import deque
 from typing import Iterable
@@ -10,13 +10,7 @@ import config
 import utils
 
 from fonts import fonts
-from online_coop import connect_to_server
 from popup_messages import PopupMessage
-
-
-class TCPHandler(socketserver.BaseRequestHandler):
-    def handle(self):
-        self.server.addr = self.client_address
 
 
 class Server(PopupMessage):
@@ -31,6 +25,7 @@ class Server(PopupMessage):
         self.addr_pd = 12
 
         self.addrs: Iterable[(str, int)] = []
+        self.try_to_send_addr_acceptance = False
 
     def draw(self):
         px.cls(config.BACKGROUND_COL)
@@ -52,9 +47,12 @@ class Server(PopupMessage):
         if px.btnp(px.KEY_ESCAPE):
             self._scenes.pop()
         if action.resume():
-            pass
+            self.try_to_send_addr_acceptance = True
 
-        self.get_new_addrs()
+        if self.try_to_send_addr_acceptance:
+            self.send_addr_acceptance()
+        else:
+            self.get_new_addrs()
 
     def draw_addrs(self):
         px.text(self.addr_x, self.addr_y, self.addrs[self.cursor_pos][0], config.TEXT2_COL)
@@ -73,21 +71,21 @@ class Server(PopupMessage):
                 1)
 
     def get_new_addrs(self) -> Iterable[str]:
-        addr = None
-        with socketserver.TCPServer((config.HOST, config.PORT), TCPHandler) as s:
-            s.timeout = 0.1
-            s.addr = None
-            s.handle_request()
-            if s.addr:
-                addr = s.addr
-        if not addr:
-            return
-        to_add = True
-        for i in self.addrs:
-            if addr[0] in i[0]:
-                to_add = False
-        if to_add:
-            self.addrs.append(addr)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind((config.HOST, config.PORT))
+            s.listen(1)
+            s.settimeout(config.SOCKET_TIMEOUT)
+            try:
+                conn, addr = s.accept()
+                to_add = True
+                for i in self.addrs:
+                    if addr[0] in i[0]:
+                        to_add = False
+                        break
+                if to_add:
+                    self.addrs.append(addr)
+            except TimeoutError:
+                pass
 
     def get_addr_pos(self) -> (int, int):
         w = (self.letter_w + 1) * len('192.168.101.101') - 1
@@ -95,6 +93,18 @@ class Server(PopupMessage):
             w, self.letter_h,
             0, 0,
             config.WINDOW_WDT, config.WINDOW_HGT)
+
+    def send_addr_acceptance(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind((config.HOST, config.PORT))
+            s.listen(1)
+            s.settimeout(config.SOCKET_TIMEOUT)
+            try:
+                conn, addr = s.accept()
+                if addr[0] == self.addrs[self.cursor_pos][0]:
+                    conn.sendall(b'accept')
+            except TimeoutError:
+                pass
 
 
 class Client(PopupMessage):
@@ -108,6 +118,9 @@ class Client(PopupMessage):
         self.letter_h = 5
         self.letter_pd = 1
         self.addr_x, self.addr_y = self.get_addr_pos()
+
+        self.should_send_requests_for_connection = False
+        self.was_accept = False
 
     def draw(self):
         px.cls(config.BACKGROUND_COL)
@@ -137,7 +150,29 @@ class Client(PopupMessage):
                 self.edit_addr_class(chr(key))
                 self.switch_addr_class()
         if action.resume():
-            connect_to_server('.'.join(self.addr_classes))
+            self.should_send_requests_for_connection = True
+
+        if self.should_send_requests_for_connection:
+            self.send_request_for_connection()
+
+        if self.was_accept:
+            pass
+
+    def send_request_for_connection(self):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(config.SOCKET_TIMEOUT)
+                s.connect(('.'.join(self.addr_classes), config.PORT))
+                s.sendall(b'')
+                data = s.recv(1024).decode()
+                if data == 'accept':
+                    self.was_accept = True
+        except TimeoutError:
+            pass
+        except ConnectionResetError:
+            pass
+        except ConnectionRefusedError:
+            pass
 
     def edit_addr_class(self, key: str):
         # current class
