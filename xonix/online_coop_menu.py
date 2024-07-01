@@ -1,4 +1,5 @@
 import socket
+import threading
 
 from collections import deque
 from typing import Iterable
@@ -26,6 +27,9 @@ class Server(PopupMessage):
 
         self.addrs: Iterable[(str, int)] = []
         self.try_to_send_addr_acceptance = False
+        self.should_close_addrs_listening = False
+        t = threading.Thread(target=self.get_new_addrs)
+        t.start()
 
     def draw(self):
         px.cls(config.BACKGROUND_COL)
@@ -46,13 +50,13 @@ class Server(PopupMessage):
                 self.cursor_pos = len(self.addrs) - 1
         if px.btnp(px.KEY_ESCAPE):
             self._scenes.pop()
-        if action.resume():
+        if action.resume() and self.addrs:
             self.try_to_send_addr_acceptance = True
 
         if self.try_to_send_addr_acceptance:
-            self.send_addr_acceptance()
-        else:
-            self.get_new_addrs()
+            self.try_to_send_addr_acceptance = False
+            t = threading.Thread(target=self.send_addr_acceptance)
+            t.start()
 
     def draw_addrs(self):
         px.text(self.addr_x, self.addr_y, self.addrs[self.cursor_pos][0], config.TEXT2_COL)
@@ -70,22 +74,25 @@ class Server(PopupMessage):
                 self.addr_y - (self.letter_h - len(config.SELECTION_CURSOR_DATA)) // 2,
                 1)
 
-    def get_new_addrs(self) -> Iterable[str]:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind((config.HOST, config.PORT))
-            s.listen(1)
-            s.settimeout(config.SOCKET_TIMEOUT)
-            try:
-                conn, addr = s.accept()
-                to_add = True
-                for i in self.addrs:
-                    if addr[0] in i[0]:
-                        to_add = False
-                        break
-                if to_add:
-                    self.addrs.append(addr)
-            except TimeoutError:
-                pass
+    def get_new_addrs(self):
+        while True:
+            if self.should_close_addrs_listening:
+                return
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind((config.HOST, config.PORT))
+                s.listen(1)
+                s.settimeout(config.SOCKET_TIMEOUT)
+                try:
+                    conn, addr = s.accept()
+                    to_add = True
+                    for i in self.addrs:
+                        if addr[0] in i[0]:
+                            to_add = False
+                            break
+                    if to_add:
+                        self.addrs.append(addr)
+                except TimeoutError:
+                    pass
 
     def get_addr_pos(self) -> (int, int):
         w = (self.letter_w + 1) * len('192.168.101.101') - 1
@@ -95,16 +102,24 @@ class Server(PopupMessage):
             config.WINDOW_WDT, config.WINDOW_HGT)
 
     def send_addr_acceptance(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind((config.HOST, config.PORT))
-            s.listen(1)
-            s.settimeout(config.SOCKET_TIMEOUT)
+        self.should_close_addrs_listening = True
+        while True:
             try:
-                conn, addr = s.accept()
-                if addr[0] == self.addrs[self.cursor_pos][0]:
-                    conn.sendall(b'accept')
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.bind((config.HOST, config.PORT))
+                    s.listen(1)
+                    s.settimeout(config.SOCKET_TIMEOUT)
+                    conn, addr = s.accept()
+                    if addr[0] == self.addrs[self.cursor_pos][0]:
+                        conn.sendall(b'accept')
+                        self.run_game()
+            except OSError:
+                pass
             except TimeoutError:
                 pass
+
+    def run_game(self):
+        print('game is running')
 
 
 class Client(PopupMessage):
@@ -121,6 +136,8 @@ class Client(PopupMessage):
 
         self.should_send_requests_for_connection = False
         self.was_accept = False
+        t = threading.Thread(target=self.send_request_for_connection)
+        t.start()
 
     def draw(self):
         px.cls(config.BACKGROUND_COL)
@@ -152,27 +169,30 @@ class Client(PopupMessage):
         if action.resume():
             self.should_send_requests_for_connection = True
 
-        if self.should_send_requests_for_connection:
-            self.send_request_for_connection()
-
         if self.was_accept:
-            pass
+            self.run_game()
 
     def send_request_for_connection(self):
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.settimeout(config.SOCKET_TIMEOUT)
-                s.connect(('.'.join(self.addr_classes), config.PORT))
-                s.sendall(b'')
-                data = s.recv(1024).decode()
-                if data == 'accept':
-                    self.was_accept = True
-        except TimeoutError:
-            pass
-        except ConnectionResetError:
-            pass
-        except ConnectionRefusedError:
-            pass
+        while True:
+            if not self.should_send_requests_for_connection:
+                continue
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.settimeout(config.SOCKET_TIMEOUT)
+                    s.connect(('.'.join(self.addr_classes), config.PORT))
+                    s.sendall(b'')
+                    data = s.recv(1024).decode()
+                    if data == 'accept':
+                        self.was_accept = True
+                        return
+            except OSError:
+                pass
+            except TimeoutError:
+                pass
+            except ConnectionResetError:
+                pass
+            except ConnectionRefusedError:
+                pass
 
     def edit_addr_class(self, key: str):
         # current class
@@ -207,6 +227,9 @@ class Client(PopupMessage):
             w, self.letter_h,
             0, 0,
             config.WINDOW_WDT, config.WINDOW_HGT)
+
+    def run_game(self):
+        print('game is running')
 
     def draw_cursor(self):
         px.rect(
