@@ -1,3 +1,4 @@
+from enum import Enum
 import socket
 import threading
 
@@ -7,6 +8,7 @@ from typing import Iterable
 import pyxel as px
 
 import action
+import draw
 import config
 import utils
 
@@ -118,8 +120,7 @@ class ChooseAddr:
         if self.addrs:
             self.draw_addrs()
         else:
-            col = config.TEXT2_COL if utils.flicker(0.7) else config.TEXT1_COL
-            px.text(self.x, self.y, 'waiting', col)
+            draw.center_text('waiting', config.TEXT2_COL if utils.flicker(0.7) else config.TEXT1_COL)
 
     def update(self):
         if action.move_player_up():
@@ -133,7 +134,7 @@ class ChooseAddr:
     @property
     def current(self):
         return self.addrs[self.cursor_pos]
-
+   
     def get_addr_pos(self) -> (int, int):
         w = (self.letter_w + 1) * len('192.168.101.101') - 1
         return utils.centerize_rect_in_rect(
@@ -157,59 +158,80 @@ class ChooseAddr:
                 self.y - (self.letter_h - len(config.SELECTION_CURSOR_DATA)) // 2,
                 1)
 
+
+class ServerState(Enum):
+    FILLING_ADDR = 1
+    CHOOSING_ADDR = 2
+    INCORRECT_ADDR = 3
+    SENDING_ADDR_ACCEPTANCE = 4
+
+
 class Server(PopupMessage):
     def __init__(self, scenes: deque):
         super().__init__(scenes, 'Waiting user')
         self.y = 12
 
+        self.state = ServerState.FILLING_ADDR
         self.host: str | None = None
         self.fill_addr = FillAddr()
         self.addr_filled = False
 
         self.choose_addr = ChooseAddr()
 
-        self.try_to_send_addr_acceptance = False
-        self.should_close_addrs_listening = False
+        self.sockets: deque[socket.socket] = deque()
 
     def draw(self):
         px.cls(config.BACKGROUND_COL)
         super().draw()
-        if self.addr_filled:
-            self.choose_addr.draw()
-        else:
-            self.fill_addr.draw()
+        match self.state:
+            case ServerState.FILLING_ADDR:
+                self.fill_addr.draw()
+            case ServerState.CHOOSING_ADDR:
+                self.choose_addr.draw()
+            case ServerState.INCORRECT_ADDR:
+                draw.center_text('incorrect address', config.TEXT2_COL if utils.flicker(0.7) else config.TEXT1_COL)
+            case ServerState.SENDING_ADDR_ACCEPTANCE:
+                draw.center_text('waiting', config.TEXT2_COL if utils.flicker(0.7) else config.TEXT1_COL)
                     
     def update(self):
         if px.btnp(px.KEY_ESCAPE):
+            while self.sockets:
+                self.sockets.pop().close()
+            if self.state == ServerState.INCORRECT_ADDR:
+                self.state = ServerState.FILLING_ADDR
+                return
             self._scenes.pop()
 
-        if self.addr_filled:
-            self.choose_addr.update()
+        match self.state:
+            case ServerState.FILLING_ADDR:
+                self.fill_addr.update()
+                if action.resume():
+                    self.state = ServerState.CHOOSING_ADDR
+                    self.host = '.'.join(self.fill_addr.classes)
+                    t = threading.Thread(target=self.get_new_addrs)
+                    t.start()
 
-            if action.resume() and self.choose_addr.addrs:
-                self.try_to_send_addr_acceptance = True
+            case ServerState.CHOOSING_ADDR:
+                self.choose_addr.update()
+                if action.resume() and self.choose_addr.addrs:
+                    self.state = ServerState.SENDING_ADDR_ACCEPTANCE
+                    t = threading.Thread(target=self.send_addr_acceptance)
+                    t.start()
 
-            if self.try_to_send_addr_acceptance:
-                self.try_to_send_addr_acceptance = False
-                t = threading.Thread(target=self.send_addr_acceptance)
-                t.start()
-        else:
-            self.fill_addr.update()
-            if action.resume():
-                self.addr_filled = True
-                self.host = '.'.join(self.fill_addr.classes)
-                t = threading.Thread(target=self.get_new_addrs)
-                t.start()
+            case ServerState.INCORRECT_ADDR:
+                if action.resume():
+                    self.state = ServerState.FILLING_ADDR
 
     def get_new_addrs(self):
         while True:
-            if self.should_close_addrs_listening:
+            if self.state != ServerState.CHOOSING_ADDR:
                 return
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.bind((self.host, config.PORT))
-                s.listen(1)
-                s.settimeout(config.SOCKET_TIMEOUT)
-                try:
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.bind((self.host, config.PORT))
+                    s.listen(1)
+                    s.settimeout(config.SOCKET_TIMEOUT)
+                    self.sockets.append(s)
                     conn, addr = s.accept()
                     to_add = True
                     for i in self.choose_addr.addrs:
@@ -218,19 +240,19 @@ class Server(PopupMessage):
                             break
                     if to_add:
                         self.choose_addr.addrs.append(addr)
-                except OSError:
-                    pass
-                except TimeoutError:
-                    pass
+            except TimeoutError:
+                self.sockets.pop().close()
+            except OSError:
+                self.state = ServerState.INCORRECT_ADDR
 
     def send_addr_acceptance(self):
-        self.should_close_addrs_listening = True
         while True:
             try:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.bind((self.host, config.PORT))
                     s.listen(1)
                     s.settimeout(config.SOCKET_TIMEOUT)
+                    self.sockets.append(s)
                     conn, addr = s.accept()
                     if addr[0] == self.choose_addr.current[0]:
                         conn.sendall(b'accept')
@@ -238,7 +260,7 @@ class Server(PopupMessage):
             except OSError:
                 pass
             except TimeoutError:
-                pass
+                self.sockets.pop().close()
 
     def run_game(self):
         print('game is running')
