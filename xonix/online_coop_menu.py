@@ -266,49 +266,67 @@ class Server(PopupMessage):
         print('game is running')
 
 
+class ClientState(Enum):
+    FILLING_ADDR = 1
+    SENDING_REQUESTS = 2
+    RUN_GAME = 3
+
+
 class Client(PopupMessage):
     def __init__(self, scenes: deque):
         super().__init__(scenes, 'Connect2server')
         self.y = 12
         self.addr = FillAddr()
 
-        self.should_send_requests_for_connection = False
-        self.was_accept = False
-        t = threading.Thread(target=self.send_request_for_connection)
-        t.start()
+        self.state = ClientState.FILLING_ADDR
+        self.sockets: deque[socket.socket] = deque()
 
     def draw(self):
         px.cls(config.BACKGROUND_COL)
         super().draw()
-        self.addr.draw()
+        match self.state:
+            case ClientState.FILLING_ADDR:
+                self.addr.draw()
+            case ClientState.SENDING_REQUESTS:
+                draw.center_text('waiting', config.TEXT2_COL if utils.flicker(0.7) else config.TEXT1_COL)
 
     def update(self):
         if px.btnp(px.KEY_ESCAPE):
+            while self.sockets:
+                self.sockets.pop().close()
+            if self.state == ClientState.SENDING_REQUESTS:
+                self.state = ClientState.FILLING_ADDR
+                return
             self._scenes.pop()
-        self.addr.update()
-        if action.resume():
-            self.should_send_requests_for_connection = True
 
-        if self.was_accept:
-            self.run_game()
+        match self.state: 
+            case ClientState.FILLING_ADDR:
+                self.addr.update()
+                if action.resume():
+                    self.state = ClientState.SENDING_REQUESTS
+                    t = threading.Thread(target=self.send_request_for_connection)
+                    t.start()
+            case ClientState.RUN_GAME:
+                self.run_game()
 
     def send_request_for_connection(self):
         while True:
-            if not self.should_send_requests_for_connection:
+            if self.state != ClientState.SENDING_REQUESTS:
                 continue
             try:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.settimeout(config.SOCKET_TIMEOUT)
                     s.connect(('.'.join(self.addr.classes), config.PORT))
                     s.sendall(b'')
+                    self.sockets.append(s)
                     data = s.recv(1024).decode()
                     if data == 'accept':
-                        self.was_accept = True
+                        self.state = ClientState.RUN_GAME
                         return
             except OSError:
                 pass
             except TimeoutError:
-                pass
+                self.sockets.pop().close()
             except ConnectionResetError:
                 pass
             except ConnectionRefusedError:
