@@ -109,9 +109,21 @@ class GetPlayersInput(PopupMessage):
         self.scenes = scenes
 
         self.possible_keys = {
-            (px.KEY_W, px.KEY_A, px.KEY_S, px.KEY_D): 'wasd',
-            (px.KEY_UP, px.KEY_LEFT, px.KEY_DOWN, px.KEY_RIGHT): 'arrows',
-            (px.GAMEPAD1_BUTTON_DPAD_UP, px.GAMEPAD1_BUTTON_DPAD_LEFT, px.GAMEPAD1_BUTTON_DPAD_DOWN, px.GAMEPAD1_BUTTON_DPAD_RIGHT): 'gamepad',
+            (px.KEY_W,
+             px.KEY_A,
+             px.KEY_S,
+             px.KEY_D): ('wasd',
+                         config.KEY_MOVE_TYPE_WASD),
+            (px.KEY_UP,
+             px.KEY_LEFT,
+             px.KEY_DOWN,
+             px.KEY_RIGHT): ('arrows',
+                             config.KEY_MOVE_TYPE_ARROWS),
+            (px.GAMEPAD1_BUTTON_DPAD_UP,
+             px.GAMEPAD1_BUTTON_DPAD_LEFT,
+             px.GAMEPAD1_BUTTON_DPAD_DOWN,
+             px.GAMEPAD1_BUTTON_DPAD_RIGHT): ('gamepad',
+                                              config.KEY_MOVE_TYPE_GAMEPAD),
         }
         self.player1: tuple | None = None
         self.player2: tuple | None = None
@@ -144,8 +156,8 @@ class GetPlayersInput(PopupMessage):
     def finish(self):
         self.scenes.pop()
         offline_coop = self.scenes[-1]
-        offline_coop.player1_keys = self.player1
-        offline_coop.player2_keys = self.player2
+        offline_coop.player1.key_type = self.possible_keys[self.player1][1]
+        offline_coop.player2.key_type = self.possible_keys[self.player2][1]
 
     def draw_title(self):
         msg = self._get_title()
@@ -159,7 +171,7 @@ class GetPlayersInput(PopupMessage):
                if self.curr_keys is None
                else 'Keys already was selected'
                if self.keys_r_busy
-               else self.possible_keys[self.curr_keys])
+               else self.possible_keys[self.curr_keys][0])
         w = len(msg) * 4 - 1
         h = 15
         x, y = utils.centerize_rect_in_rect(w, h, 0, 0, config.WINDOW_WDT, config.WINDOW_HGT)

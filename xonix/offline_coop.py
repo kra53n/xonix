@@ -23,26 +23,22 @@ class OfflineCoop:
                  lives: int,
                  lvl: int,
                  enemies: Iterable[Enemy],
-                 player1_keys: tuple | None = None,
-                 player2_keys: tuple | None = None):
+                 player1_key_type: int = config.KEY_MOVE_TYPE_ANY,
+                 player2_key_type: int = config.KEY_MOVE_TYPE_ANY):
         self._scenes = scenes
         self._field = Field()
-        self._player1 = self.spawn_player1()
-        self._player2 = self.spawn_player2()
+        self.player1 = self.spawn_player1(player1_key_type)
+        self.player2 = self.spawn_player2(player2_key_type)
         self._enemies = enemies
         self.lives = lives
         self.lvl = lvl
         self._bars = self.spawn_bars()
 
-        # the values setting after PlayerInput execution if they are None
-        self.player1_keys: tuple | None = player1_keys
-        self.player2_keys: tuple | None = player2_keys
-        
         # execute functions in deque when update function calling
         self.exec_later = deque([
             lambda lvl=self.lvl: colorschemes.set(lvl % len(colorschemes.palletes)),
         ])
-        if not (self.player1_keys and self.player2_keys):
+        if config.KEY_MOVE_TYPE_ANY in (self.player1.key_type, self.player2.key_type):
             self.exec_later.append(lambda: self._scenes.append(GetPlayersInput(self._scenes)))
     
     def draw(self):
@@ -51,11 +47,11 @@ class OfflineCoop:
             bar.draw()
         for enemy in self._enemies:
             enemy.draw()
-        self._player1.draw_tail()
-        self._player2.draw_tail()
+        self.player1.draw_tail()
+        self.player2.draw_tail()
         self._field.draw()
-        self._player1.draw_only_player()
-        self._player2.draw_only_player()
+        self.player1.draw_only_player()
+        self.player2.draw_only_player()
 
     def update(self):
         while self.exec_later:
@@ -63,22 +59,23 @@ class OfflineCoop:
 
         self.update_field()
         for enemy in self._enemies:
-            enemy.update(self._field, self._player1.tail)
+            enemy.update(self._field, self.player1.tail)
+            enemy.update(self._field, self.player2.tail)
 
         self.update_game_status()
 
     def update_game_status(self):
-        someone_has_touched_someone = (self._player1.is_stepped_on_tail or
-                                       self._player1.tail.have_come or
-                                       self._player1.is_stepped_on_other_tail(self._player2.tail) or
-                                       self._player2.is_stepped_on_tail or
-                                       self._player2.tail.have_come or
-                                       self._player2.is_stepped_on_other_tail(self._player1.tail))
+        someone_has_touched_someone = (self.player1.is_stepped_on_tail or
+                                       self.player1.tail.have_come or
+                                       self.player1.is_stepped_on_other_tail(self.player2.tail) or
+                                       self.player2.is_stepped_on_tail or
+                                       self.player2.tail.have_come or
+                                       self.player2.is_stepped_on_other_tail(self.player1.tail))
         # lose the live
         if someone_has_touched_someone and self.lives > 1:
             self.lives -= 1
-            self._player1 = self.spawn_player1()
-            self._player2 = self.spawn_player2()
+            self.player1 = self.spawn_player1(self.player1.key_type)
+            self.player2 = self.spawn_player2(self.player2.key_type)
         # game over
         elif someone_has_touched_someone:
             self._scenes.append(GameOverMessage(self._scenes))
@@ -91,23 +88,25 @@ class OfflineCoop:
                 self._scenes,
                 self.lives,
                 self.lvl,
-                player1_keys=self.player1_keys,
-                player2_keys=self.player2_keys,
+                player1_key_type=self.player1.key_type,
+                player2_key_type=self.player2.key_type,
             ))
             self._scenes.append(WinMessage(self._scenes))
 
 
-    def spawn_player1(self) -> Player:
+    def spawn_player1(self, key_type: int) -> Player:
         return Player(self._field.x + self._field.block_size,
                       self._field.y + self._field.block_size * 2,
                       config.PLAYER_COL,
-                      config.TAIL_COL)
+                      config.TAIL_COL,
+                      key_type)
 
-    def spawn_player2(self) -> Player:
+    def spawn_player2(self, key_type: int) -> Player:
         return Player(self._field.x + self._field.w * self._field.block_size - self._field.block_size * 2,
                       self._field.y + self._field.block_size * 2,
                       config.TAIL_COL,
-                      config.PLAYER_COL)
+                      config.PLAYER_COL,
+                      key_type)
 
     def spawn_bars(self) -> Iterable[Bar]:
         bars = (Bar(2, 0, 'fullness', config.TEXT1_COL, lambda: f'{int(self._field.fullness*100)}%', config.TEXT2_COL),
@@ -145,21 +144,8 @@ class OfflineCoop:
                 else:
                     player.right()
 
-    def move_players(self):
-        if self.player1_keys is None or self.player2_keys is None:
-            return
-        for player1_key in self.player1_keys:
-            if px.btnp(player1_key):
-                self._player1.update()
-                break
-        for player2_key in self.player2_keys:
-            if px.btnp(player2_key):
-                self._player2.update()
-                break
-        self.move_player(self._player1)
-        self.move_player(self._player2)
-
     def update_player(self, player: Player):
+        player.update()
         player.on_field = self._field.obj_on_field(player,
                                                    player.size)
 
@@ -172,6 +158,7 @@ class OfflineCoop:
         player.prev_on_field = player.on_field
 
     def update_field(self):
-        self.move_players()
-        self.update_player(self._player1)
-        self.update_player(self._player2)
+        self.move_player(self.player1)
+        self.move_player(self.player2)
+        self.update_player(self.player1)
+        self.update_player(self.player2)

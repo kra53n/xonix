@@ -22,6 +22,7 @@ class Player:
         y: int,
         col: int = config.PLAYER_COL,
         tail_col: int = config.TAIL_COL,
+        key_type: int = config.KEY_MOVE_TYPE_ANY,
     ):
         self.x = x
         self.y = y
@@ -32,6 +33,8 @@ class Player:
         self.move_status = PlayerMoveStatus.Stop
         self.prev_on_field: int = None
         self.on_field: int = None
+
+        self.key_type = key_type
 
         self.tail = Tail(tail_col)
 
@@ -62,19 +65,19 @@ class Player:
         self.x += self._offset
 
     def update(self):
-        if (action.move_player_up() and
+        if (action.move_player_up(self.key_type) and
             self.move_status != PlayerMoveStatus.Down):
             self.move_status = PlayerMoveStatus.Up
 
-        if (action.move_player_down() and
+        if (action.move_player_down(self.key_type) and
             self.move_status != PlayerMoveStatus.Up):
             self.move_status = PlayerMoveStatus.Down
 
-        if (action.move_player_left() and
+        if (action.move_player_left(self.key_type) and
             self.move_status != PlayerMoveStatus.Right):
             self.move_status = PlayerMoveStatus.Left
 
-        if (action.move_player_right() and
+        if (action.move_player_right(self.key_type) and
             self.move_status != PlayerMoveStatus.Left):
             self.move_status = PlayerMoveStatus.Right
 
