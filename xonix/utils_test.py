@@ -1,6 +1,6 @@
 import unittest
 
-from utils import lispy
+from utils import lispy, unlispy
 
 
 class TestLispies(unittest.TestCase):
@@ -18,8 +18,8 @@ class TestLispies(unittest.TestCase):
             '(action ((player up) (enemy left)))',
         ),
         (
-            {'action': {'player': 'up', 'enemies': (1, 2, 3)}},
-            '(action ((player up) (enemies (1 2 3))))',
+            {'action': {'enemies': ['1', '2', '3'], 'player': 'up'}},
+            '(action ((enemies (1 2 3)) (player up)))',
         ),
     )
 
@@ -27,7 +27,11 @@ class TestLispies(unittest.TestCase):
         for lhs, rhs in self.cases:
             self.assertEqual(lispy(lhs), rhs)
 
+    def test_unlispy(self):
+        self.assertEqual({'accept': None}, unlispy(self.cases[0][1]))
+        for lhs, rhs in self.cases[1:]:
+            self.assertEqual(lhs, unlispy(rhs))
+
 
 if __name__ == '__main__':
-    # test_lispy()
     unittest.main()

@@ -30,6 +30,15 @@ def flicker(v: float) -> bool:
 
 # Converts {'action': ('player': 'up')} to `'(action (player up))'`.
 # Other examples of actions can be viewed in `utils_test.py` file.
+#
+# The `lispy` function uses for sending information between client and
+# server. We could send just the Python type like dict apllyied with
+# `str` but this solution has disadvantage:
+#
+# >>> len("{'action': {'player': 'up'}}")
+# 28
+# >>> len('(action (player up))')
+# 20
 def lispy(d: dict | str) -> str:
     match d:
         case str():
@@ -41,7 +50,7 @@ def lispy(d: dict | str) -> str:
     for k, v in d.items():
         lhs = str(k)
         match v:
-            case str():
+            case str() | int():
                 rhs = v
             case tuple() | list() | dict():
                 rhs = lispy(v)
@@ -55,4 +64,53 @@ def lispy(d: dict | str) -> str:
 
 
 def unlispy(s: str) -> dict:
-    pass
+    stack = []
+    res = {}
+    word = ''
+    i = 0
+    while i < len(s):
+        match s[i]:
+            case '(':
+                stack.append(0)
+                i += 1
+                continue
+            case ')':
+                if word:
+                    stack.append(word)
+                    word = ''
+                i += 1
+                stack.append(1)
+                continue
+            case ' ':
+                while i < len(s) and s[i] == ' ':
+                    i += 1
+                if word:
+                    stack.append(word)
+                    word = ''
+                continue
+        word += s[i]
+        i += 1
+    return _unlispy_recursion(stack)
+
+
+def _unlispy_recursion(l: list):
+    if len(l) > 2:
+        if l[0] == 0 and l[1] == 0:
+            res = {}
+            start = 0
+            while start < len(l):
+                if l[start] == 0 and l[start+1] != 0:
+                    end = start + 2
+                    while end < len(l) and l[end] != 1:
+                        end += 1
+                    res[l[start+1]] = _unlispy_recursion(l[start+2:end])
+                    start = end
+                start += 1
+            return res
+        if l[-1] != 1:
+            return l[1:]
+        if l[0] == 0:
+            # start here
+            return {l[1]: _unlispy_recursion(l[2:-1])}
+    elif len(l) == 1:
+        return l[0]
