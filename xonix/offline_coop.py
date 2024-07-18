@@ -101,6 +101,7 @@ class OfflineCoop:
                       config.TAIL_COL,
                       key_type)
 
+    # NOTE: remove spawn_players functions to utils
     def spawn_player2(self, key_type: int) -> Player:
         return Player(self._field.x + self._field.w * self._field.block_size - self._field.block_size * 2,
                       self._field.y + self._field.block_size * 2,

@@ -9,6 +9,8 @@ import pyxel as px
 
 import action
 import draw
+import online_coop
+import lvls
 import config
 import utils
 
@@ -18,7 +20,8 @@ from popup_messages import PopupMessage
 
 class FillAddr:
     def __init__(self):
-        self.classes = ['0', '0', '0', '0']
+        # self.classes = ['0', '0', '0', '0']
+        self.classes = ['26', '196', '145', '88']
         self.cursor_pos = 0
 
         self.letter_w = 3
@@ -247,6 +250,8 @@ class Server(PopupMessage):
 
     def send_addr_acceptance(self):
         while True:
+            if self.state == ServerState.FILLING_ADDR:
+                return
             try:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.bind((self.host, config.PORT))
@@ -263,7 +268,16 @@ class Server(PopupMessage):
                 self.sockets.pop().close()
 
     def run_game(self):
-        print('game is running')
+        self._scenes.pop()
+        self._scenes.pop()
+        self._scenes.append(lvls.get_next_lvl(
+            online_coop.Server,
+            self._scenes,
+            3,
+            -1,
+            addr='.'.join(self.fill_addr.classes),
+        ))
+        self.state = ServerState.FILLING_ADDR
 
 
 class ClientState(Enum):
@@ -333,7 +347,9 @@ class Client(PopupMessage):
                 pass
 
     def run_game(self):
-        print('game is running')
+        self._scenes.pop()
+        self._scenes.pop()
+        self._scenes.append(online_coop.Client(self._scenes, '.'.join(self.addr.classes)))
 
 
 class OnlineCoopMenu(PopupMessage):

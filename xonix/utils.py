@@ -26,3 +26,33 @@ def draw_selection_cursor(x: int, y: int, pd: int):
 
 def flicker(v: float) -> bool:
     return abs(px.sin(px.frame_count * 8)) > v
+
+
+# Converts {'action': ('player': 'up')} to `'(action (player up))'`.
+# Other examples of actions can be viewed in `utils_test.py` file.
+def lispy(d: dict | str) -> str:
+    match d:
+        case str():
+            return f'({d})'
+        case tuple() | list():
+            return '(' + ' '.join(map(str, d)) + ')'
+    res = '('
+    bracky = len(d) > 1
+    for k, v in d.items():
+        lhs = str(k)
+        match v:
+            case str():
+                rhs = v
+            case tuple() | list() | dict():
+                rhs = lispy(v)
+        i = f'{lhs} {rhs}'
+        if bracky:
+            i = f'({i}) '
+        res += i
+    if bracky:
+        res = res.rstrip()
+    return res + ')'
+
+
+def unlispy(s: str) -> dict:
+    pass
