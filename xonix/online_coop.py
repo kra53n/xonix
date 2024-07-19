@@ -14,6 +14,7 @@ from enemy import Enemy
 from fonts import fonts
 from field import Field
 from player import Player, PlayerMoveStatus
+from utils import lispy, unlispy
 
 
 class ServerState(Enum):
@@ -56,7 +57,7 @@ class Server:
                 with conn:
                     data = conn.recv(1024)
                     print(data)
-                    conn.sendall(b'hello client')
+                    conn.sendall(data_pack(self).encode())
             s.close()
 
     def draw(self):
@@ -171,7 +172,9 @@ class Client:
                     s.connect((self.addr, config.PORT))
                     s.sendall(f'(wait)'.encode())
                     # self.state = ClientState.WAITING_SERVER
-                    data = s.recv(1024).decode()
+                    data = ''
+                    while (buf := s.recv(1024).decode()):
+                        data += buf
                     print(data)
             except ConnectionResetError:
                 print('ConnectionResetError')
@@ -186,18 +189,20 @@ class Client:
                 obj.draw()
 
     def update(self):
-        self.update_by_local()
-        self.update_by_server()
+        # self.update_by_local()
+        # self.update_by_server()
+        pass
 
     def update_by_local(self):
-        if action.move_player_up():
-            self.player.move_status = PlayerMoveStatus.Up
-        if action.move_player_down():
-            self.player.move_status = PlayerMoveStatus.Down
-        if action.move_player_left():
-            self.player.move_status = PlayerMoveStatus.Left
-        if action.move_player_right():
-            self.player.move_status = PlayerMoveStatus.Right
+        # if action.move_player_up():
+        #     self.player.move_status = PlayerMoveStatus.Up
+        # if action.move_player_down():
+        #     self.player.move_status = PlayerMoveStatus.Down
+        # if action.move_player_left():
+        #     self.player.move_status = PlayerMoveStatus.Left
+        # if action.move_player_right():
+        #     self.player.move_status = PlayerMoveStatus.Right
+        pass
 
     def update_by_server(self):
         pass
@@ -207,3 +212,19 @@ class Client:
                       self.field.y + self.field.block_size * 2,
                       config.TAIL_COL,
                       config.PLAYER_COL)
+
+
+def data_unpack(c: Client):
+    pass
+
+
+def data_pack(s: Server) -> str:
+    return lispy({
+        'data': {
+            'field': s.field._field,
+            'player1': (s.player1.x, s.player1.y),
+            'player2': (s.player2.x, s.player2.y),
+            'lives': s.lives,
+            'lvl': s.lvl,
+        },
+    })
