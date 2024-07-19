@@ -39,12 +39,24 @@ def flicker(v: float) -> bool:
 # 28
 # >>> len('(action (player up))')
 # 20
+#
+# In a practice the Python type applyied with `str` have 10132 bytes
+# when lispy conversion - 6947
 def lispy(d: dict | str) -> str:
     match d:
         case str():
             return f'({d})'
         case tuple() | list():
-            return '(' + ' '.join(map(str, d)) + ')'
+            lists_in_list = all(map(lambda x: isinstance(x, list), d))
+            v = None
+            if lists_in_list:
+                v = []
+                for i, l in enumerate(d):
+                    v.append(f'({i} ' + ' '.join(map(str, l)) + ')')
+                v = ' '.join(v)
+            else:
+                v = ' '.join(map(str, d))
+            return '(' + v + ')'
     res = '('
     bracky = len(d) > 1
     for k, v in d.items():
@@ -108,6 +120,7 @@ def _unlispy_recursion(l: list):
                 start += 1
             return res
         if l[-1] != 1:
+            # print(l)
             return l[1:]
         if l[0] == 0:
             # start here
