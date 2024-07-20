@@ -21,7 +21,8 @@ from popup_messages import PopupMessage
 class FillAddr:
     def __init__(self):
         # self.classes = ['0', '0', '0', '0']
-        self.classes = ['26', '196', '145', '88']
+        # 192.168.0.36
+        self.classes = ['192', '168', '0', '36']
         self.cursor_pos = 0
 
         self.letter_w = 3
